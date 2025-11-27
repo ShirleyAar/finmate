@@ -25,50 +25,45 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // === ESTADO CORREGIDO PARA EVITAR ERROR DE TYPESCRIPT ===
-  const [userId, setUserId] = useState<string | null>(null);
+   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    // 1. Lógica para generar un ID de usuario único (simulación de sesión)
+    // Generar o recuperar un ID único para este navegador
     let currentUserId = localStorage.getItem('guest_user_id');
+    
     if (!currentUserId) {
       currentUserId = crypto.randomUUID();
       localStorage.setItem('guest_user_id', currentUserId);
-      // Simulación: forzar a ir al registro la primera vez
+      // La primera vez, aseguramos que NO esté logueado
       localStorage.setItem('is_logged_in', 'false'); 
     }
     
-    // 2. Establecer el ID de usuario
     setUserId(currentUserId);
     setAuthReady(true);
   }, []);
 
   const handleLogin = (id: string) => {
-    // Simular inicio de sesión guardando la bandera
     localStorage.setItem('is_logged_in', 'true');
-    setUserId(id); 
+    // Forzar recarga para actualizar rutas
+    window.location.reload();
   };
   
   const handleLogout = () => {
-    // Simular cierre de sesión
     localStorage.setItem('is_logged_in', 'false');
-    // Esto fuerza al usuario a ver la pantalla de registro
     window.location.reload(); 
   };
 
-
   if (!authReady) {
-    // Muestra un loader mientras genera el ID
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
-        <p className="text-xl font-semibold text-growth">Cargando aplicación...</p>
+        <p className="text-xl font-semibold text-growth">Cargando FinMate...</p>
       </div>
     );
   }
 
-  // Define si el usuario está 'autenticado' (usando la bandera de localStorage)
-  const isAuthenticated = localStorage.getItem('is_logged_in') === 'true' && !!userId;
+  // Verificar si está logueado
+  const isAuthenticated = localStorage.getItem('is_logged_in') === 'true';
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -78,7 +73,16 @@ const App = () => {
         <Sonner />
         <HashRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+             {/* SI NO ESTÁ LOGUEADO -> REGISTRO. SI SÍ -> DASHBOARD */}
+              <Route 
+                  path="/" 
+                  element={
+                      isAuthenticated ? 
+                      <Navigate to="/dashboard" replace /> : 
+                      <Navigate to="/register" replace />
+                  } 
+              />
+          
             <Route path="/home" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
