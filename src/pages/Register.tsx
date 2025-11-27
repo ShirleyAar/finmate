@@ -12,9 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useApp } from "@/contexts/AppContext";
 
 const Register = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Esta es la herramienta para cambiar de página
   const { toast } = useToast();
-   const { setUser, handleLogin, userId } = useApp(); 
+  const { setUser, handleLogin, userId } = useApp(); 
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -35,13 +36,13 @@ const Register = () => {
       return;
     }
 
-    // Guardar datos en el estado del juego
+    // 1. Guardar nombre en el estado
     setUser({
       name: formData.name,
       email: formData.email,
     });
 
-    // ACTIVAR LOGIN para que el sistema sepa que entraste
+    // 2. Activar la sesión
     if (userId) {
         handleLogin(userId);
     }
@@ -51,7 +52,9 @@ const Register = () => {
       description: "Tu cuenta ha sido creada exitosamente.",
     });
     
-    // handleLogin hace un reload, así que la navegación es automática
+    // 3. ¡ESTA ES LA LÍNEA CLAVE QUE FALTABA! 
+    // Forzar el cambio de página al Dashboard inmediatamente
+    navigate("/dashboard");
   };
 
   return (
