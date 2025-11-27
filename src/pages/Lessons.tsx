@@ -34,7 +34,7 @@ const Lessons = () => {
       description: "Aprende a ahorrar de manera más efectiva con métodos comprobados",
       category: "savings",
       icon: TrendingUp,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "U5wCPaNAjls",
       viewed: viewedLessons.has(1),
     },
     {
@@ -43,7 +43,7 @@ const Lessons = () => {
       description: "Domina tu calendario de pagos y nunca pierdas una fecha límite",
       category: "payments",
       icon: Calendar,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "Rir3GoHwgVs",
       viewed: viewedLessons.has(2),
     },
     {
@@ -52,7 +52,7 @@ const Lessons = () => {
       description: "Reduce tus tasas de interés a través de comunicación efectiva",
       category: "negotiation",
       icon: MessageCircle,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "lKV_21kISVs",
       viewed: viewedLessons.has(3),
     },
     {
@@ -61,7 +61,7 @@ const Lessons = () => {
       description: "Construye una red de seguridad para gastos inesperados",
       category: "savings",
       icon: PiggyBank,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "CnTY-lNfXg8",
       viewed: viewedLessons.has(4),
     },
     {
@@ -70,7 +70,7 @@ const Lessons = () => {
       description: "Comprende e impulsa tu calificación crediticia",
       category: "payments",
       icon: CreditCard,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "40cN-fJawKk",
       viewed: viewedLessons.has(5),
     },
     {
@@ -79,7 +79,7 @@ const Lessons = () => {
       description: "Simplifica múltiples deudas en un pago manejable",
       category: "negotiation",
       icon: FileText,
-      youtubeId: "dQw4w9WgXcQ",
+      youtubeId: "TY1oF-1EoKI",
       viewed: viewedLessons.has(6),
     },
   ];
