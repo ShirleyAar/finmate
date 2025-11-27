@@ -36,17 +36,25 @@ const Register = () => {
       return;
     }
 
-    setUser({ name: formData.name, email: formData.email });
+    // 1. Guardar datos del usuario PRIMERO
+    const newUser = {
+      name: formData.name,
+      email: formData.email,
+    };
+    setUser(newUser);
 
+    // 2. Iniciar sesión
     if (userId) {
         handleLogin(userId);
     }
 
     toast({
       title: "¡Bienvenido a FinMate!",
-      description: "Tu cuenta ha sido creada exitosamente.",
+      description: `Hola, ${formData.name}. Tu cuenta ha sido creada.`,
     });
     
+    // La redirección es manejada por App.tsx al detectar el login, 
+    // pero navigate asegura la transición suave.
     navigate("/dashboard");
   };
 
@@ -79,7 +87,6 @@ const Register = () => {
               <Button type="submit" className="w-full bg-growth hover:bg-growth/90 text-white" size="lg">Entrar a mi Jardín Financiero</Button>
             </form>
             
-            {/* Enlace a la NUEVA página de Login */}
             <div className="text-center text-sm text-muted-foreground mt-6">
               ¿Ya tienes una cuenta?{" "}
               <Link to="/login" className="text-growth hover:underline font-medium">

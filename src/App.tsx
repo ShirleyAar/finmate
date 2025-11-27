@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
-import Login from "./pages/Login"; // <--- Verifica que esta línea exista
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import DebtDetails from "./pages/DebtDetails";
 import Lessons from "./pages/Lessons";
@@ -23,6 +23,17 @@ import Streaks from "./pages/Streaks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// --- COMPONENTE DE PROTECCIÓN ---
+// Este componente actúa como un guardia de seguridad.
+// Si no tienes pase (sesión), te manda a la fila de registro.
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const isLoggedIn = sessionStorage.getItem('is_logged_in') === 'true';
+  if (!isLoggedIn) {
+    return <Navigate to="/register" replace />;
+  }
+  return children;
+};
 
 const App = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -51,7 +62,8 @@ const App = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('is_logged_in');
     setIsLoggedIn(false);
-    window.location.reload(); 
+    // Al cambiar el estado isLoggedIn a false, el ProtectedRoute
+    // automáticamente expulsará al usuario de cualquier página privada.
   };
 
   if (!authReady) {
@@ -70,44 +82,37 @@ const App = () => {
           <Sonner />
           <HashRouter>
             <Routes>
-              {/* Redirección inicial */}
+              {/* Rutas Públicas */}
               <Route 
                   path="/" 
                   element={
-                      isLoggedIn ? 
-                      <Navigate to="/dashboard" replace /> : 
-                      <Navigate to="/register" replace />
+                      isLoggedIn ? <Navigate to="/dashboard" replace /> : <Navigate to="/register" replace />
                   } 
               />
-              
-              {/* Si ya está logueado, no dejar ver registro/login */}
               <Route 
                   path="/register" 
-                  element={
-                      isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />
-                  } 
+                  element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
               />
-              
-              {/* --- ESTA ES LA RUTA QUE TE FALTABA --- */}
               <Route 
                   path="/login" 
-                  element={
-                      isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />
-                  } 
+                  element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />} 
               />
-              
               <Route path="/home" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/debts" element={<DebtDetails />} />
-              <Route path="/lessons" element={<Lessons />} />
-              <Route path="/progress" element={<Progress />} />
-              <Route path="/badges" element={<Badges />} />
-              <Route path="/challenges" element={<Challenges />} />
-              <Route path="/payments" element={<Payments />} />
-              <Route path="/income" element={<Income />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/streaks" element={<Streaks />} />
+
+              {/* Rutas Privadas (PROTEGIDAS) */}
+              {/* Envolvemos cada página con <ProtectedRoute> */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/debts" element={<ProtectedRoute><DebtDetails /></ProtectedRoute>} />
+              <Route path="/lessons" element={<ProtectedRoute><Lessons /></ProtectedRoute>} />
+              <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+              <Route path="/badges" element={<ProtectedRoute><Badges /></ProtectedRoute>} />
+              <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
+              <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+              <Route path="/income" element={<ProtectedRoute><Income /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+              <Route path="/streaks" element={<ProtectedRoute><Streaks /></ProtectedRoute>} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </HashRouter>
