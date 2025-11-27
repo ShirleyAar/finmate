@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
-import Login from "./pages/Login";
+import Login from "./pages/Login"; // <--- Verifica que esta línea exista
 import Dashboard from "./pages/Dashboard";
 import DebtDetails from "./pages/DebtDetails";
 import Lessons from "./pages/Lessons";
@@ -30,9 +30,6 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // 1. Identidad del Usuario (Persistente):
-    // Mantenemos el ID en localStorage para no perder tus datos (deudas, lecciones)
-    // aunque cierres la pestaña.
     let currentUserId = localStorage.getItem('guest_user_id');
     if (!currentUserId) {
       currentUserId = crypto.randomUUID();
@@ -40,8 +37,6 @@ const App = () => {
     }
     setUserId(currentUserId);
 
-    // 2. Estado de la Sesión (Temporal):
-    // Usamos sessionStorage. Esto se BORRA automáticamente al cerrar la pestaña.
     const sessionStatus = sessionStorage.getItem('is_logged_in') === 'true';
     setIsLoggedIn(sessionStatus);
 
@@ -49,7 +44,6 @@ const App = () => {
   }, []);
 
   const handleLogin = (id: string) => {
-    // Guardamos en sessionStorage (memoria temporal de la pestaña)
     sessionStorage.setItem('is_logged_in', 'true');
     setIsLoggedIn(true);
   };
@@ -76,7 +70,7 @@ const App = () => {
           <Sonner />
           <HashRouter>
             <Routes>
-              {/* Redirección Principal */}
+              {/* Redirección inicial */}
               <Route 
                   path="/" 
                   element={
@@ -86,13 +80,15 @@ const App = () => {
                   } 
               />
               
-              {/* Protección de Rutas Públicas (Si ya entró, mandarlo al Dashboard) */}
+              {/* Si ya está logueado, no dejar ver registro/login */}
               <Route 
                   path="/register" 
                   element={
                       isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />
                   } 
               />
+              
+              {/* --- ESTA ES LA RUTA QUE TE FALTABA --- */}
               <Route 
                   path="/login" 
                   element={
@@ -100,7 +96,6 @@ const App = () => {
                   } 
               />
               
-              {/* Rutas Privadas */}
               <Route path="/home" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/debts" element={<DebtDetails />} />
