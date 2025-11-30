@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Agregamos useEffect por seguridad
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,26 +6,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
-import { ChevronLeft, User, Mail, Camera, LogOut } from "lucide-react"; // Agregamos LogOut
+import { ChevronLeft, User, Mail, Camera, LogOut } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Traemos handleLogout del contexto
   const { user, setUser, handleLogout } = useApp();
   
+  // Estado para controlar si estamos editando
   const [isEditing, setIsEditing] = useState(false);
+
+  // Estado local para el formulario
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    avatar: user?.avatar || "",
+    name: "",
+    email: "",
+    avatar: "",
   });
+
+  // Efecto para cargar los datos del usuario cuando el componente se monta
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        avatar: user.avatar || "",
+      });
+    }
+  }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Guardamos los cambios en el contexto (y localStorage)
     setUser({
       name: formData.name,
       email: formData.email,
@@ -37,13 +51,22 @@ const Profile = () => {
       description: "Tus cambios han sido guardados exitosamente",
     });
     
+    setIsEditing(false); // Salimos del modo edición
+  };
+
+  const handleCancel = () => {
+    // Revertimos los cambios al valor original
+    setFormData({
+      name: user?.name || "",
+      email: user?.email || "",
+      avatar: user?.avatar || "",
+    });
     setIsEditing(false);
   };
 
   const handleLogoutClick = () => {
     handleLogout();
-    // La redirección a home ocurre automáticamente al cambiar el estado de sesión
-    navigate("/"); 
+    navigate("/");
   };
 
   return (
@@ -51,23 +74,25 @@ const Profile = () => {
       <DashboardHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/dashboard")}
-          className="mb-4 text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Volver al Panel
-        </Button>
+        <div className="flex items-center mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/dashboard")}
+            className="text-muted-foreground hover:text-foreground p-0"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Volver al Panel
+          </Button>
+        </div>
 
         <h1 className="text-3xl font-bold text-foreground mb-8">Mi Perfil</h1>
 
         <div className="max-w-2xl mx-auto">
-          {/* --- TARJETA PRINCIPAL (Datos + Logout) --- */}
+          
           <Card className="p-8">
             <div className="flex flex-col items-center mb-8">
-              <div className="relative">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-growth-light to-growth flex items-center justify-center overflow-hidden">
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-growth-light to-growth flex items-center justify-center overflow-hidden border-4 border-white shadow-sm">
                   {formData.avatar ? (
                     <img 
                       src={formData.avatar} 
@@ -78,18 +103,32 @@ const Profile = () => {
                     <User className="w-16 h-16 text-white" />
                   )}
                 </div>
+                
+                {/* Botón de cámara solo visible en modo edición */}
                 {isEditing && (
                   <button 
-                    className="absolute bottom-0 right-0 p-2 rounded-full bg-growth text-white hover:bg-growth/90 transition-colors"
+                    type="button"
+                    className="absolute bottom-0 right-0 p-2 rounded-full bg-growth text-white hover:bg-growth/90 transition-colors shadow-md cursor-pointer z-10"
                     onClick={() => {
-                      const url = prompt("Ingresa la URL de tu avatar:");
+                      const url = prompt("Ingresa la URL de tu avatar (imagen):");
                       if (url) setFormData({ ...formData, avatar: url });
                     }}
+                    title="Cambiar foto"
                   >
                     <Camera className="h-4 w-4" />
                   </button>
                 )}
               </div>
+              
+              {/* Nombre y Correo debajo del avatar (Solo lectura visual) */}
+              {!isEditing && (
+                <div className="text-center mt-4">
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {formData.name || "Usuario"}
+                  </h2>
+                  <p className="text-muted-foreground">{formData.email || "Sin correo"}</p>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -100,8 +139,9 @@ const Profile = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing} // Deshabilitado si no estamos editando
                   required
+                  className={!isEditing ? "bg-muted/50 border-transparent text-muted-foreground" : ""}
                 />
               </div>
 
@@ -116,17 +156,18 @@ const Profile = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     disabled={!isEditing}
                     required
-                    className="flex-1"
+                    className={`flex-1 ${!isEditing ? "bg-muted/50 border-transparent text-muted-foreground" : ""}`}
                   />
                 </div>
               </div>
 
+              {/* Botones de Acción */}
               <div className="flex gap-4 pt-4">
                 {!isEditing ? (
                   <Button 
                     type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="flex-1 bg-growth hover:bg-growth/90 text-white"
+                    onClick={() => setIsEditing(true)} // Activa el modo edición
+                    className="w-full bg-growth hover:bg-growth/90 text-white"
                   >
                     Editar Perfil
                   </Button>
@@ -141,14 +182,7 @@ const Profile = () => {
                     <Button 
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setFormData({
-                          name: user?.name || "",
-                          email: user?.email || "",
-                          avatar: user?.avatar || "",
-                        });
-                      }}
+                      onClick={handleCancel} // Cancela la edición
                       className="flex-1"
                     >
                       Cancelar
@@ -158,7 +192,6 @@ const Profile = () => {
               </div>
             </form>
 
-            {/* --- SECCIÓN NUEVA: CERRAR SESIÓN --- */}
             <div className="pt-8 border-t mt-8">
               <Button 
                 variant="destructive" 
@@ -171,47 +204,21 @@ const Profile = () => {
             </div>
           </Card>
 
-          {/* --- TARJETA PREMIUM (MANTENIDA) --- */}
+          {/* Tarjetas informativas (Premium y Privacidad) */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-accent/10 to-card border-accent/20">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-foreground mb-2 text-lg">FinMate Premium ✨</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Desbloquea todas las funciones avanzadas
-                </p>
-              </div>
-            </div>
-            
-            <ul className="space-y-2 mb-6 text-sm">
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span>
-                Simulador de estrategias de pago avanzadas
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span>
-                Análisis predictivo de tu deuda
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span>
-                Exportación de reportes en PDF
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span>
-                Soporte prioritario 24/7
-              </li>
-            </ul>
-
+            <h3 className="font-semibold text-foreground mb-2 text-lg">FinMate Premium ✨</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Desbloquea todas las funciones avanzadas
+            </p>
             <Button className="w-full bg-accent hover:bg-accent/90 text-white font-semibold">
               Actualizar a Premium
             </Button>
           </Card>
 
-          {/* --- TARJETA PRIVACIDAD (MANTENIDA) --- */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-trust-light to-card border-trust/20">
             <h3 className="font-semibold text-foreground mb-2">Privacidad y Seguridad</h3>
             <p className="text-sm text-muted-foreground">
-              Tus datos están seguros con nosotros. No solicitamos información bancaria 
-              ni compartimos tus datos personales con terceros.
+              Tus datos están seguros con nosotros.
             </p>
           </Card>
         </div>

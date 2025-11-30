@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
-// Nota: Login.tsx ya no es necesario, Register maneja ambos
+// NO importamos Login porque ya no existe
 import Dashboard from "./pages/Dashboard";
 import DebtDetails from "./pages/DebtDetails";
 import Lessons from "./pages/Lessons";
@@ -24,11 +24,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Guardia de seguridad
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isLoggedIn = sessionStorage.getItem('is_logged_in') === 'true';
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    // Si intentas entrar a una ruta protegida sin sesión, te manda al registro
+    return <Navigate to="/register" replace />;
   }
   return children;
 };
@@ -58,9 +58,13 @@ const App = () => {
   };
   
   const handleLogout = () => {
+    // 1. Borrar sesión
     sessionStorage.removeItem('is_logged_in');
     setIsLoggedIn(false);
-    window.location.reload(); 
+    
+    // 2. Forzar navegación al HOME ("/")
+    // Como estamos fuera del Router aquí, usamos window.location
+    window.location.href = window.location.pathname; // Recarga en la raíz base
   };
 
   if (!authReady) {
@@ -79,10 +83,10 @@ const App = () => {
           <Sonner />
           <HashRouter>
             <Routes>
-              {/* Home es la entrada principal */}
+              {/* Home es la entrada pública */}
               <Route path="/" element={<Home />} />
               
-              {/* Ambas rutas usan el mismo componente inteligente */}
+              {/* Rutas de autenticación */}
               <Route 
                   path="/register" 
                   element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
@@ -104,7 +108,6 @@ const App = () => {
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
               <Route path="/streaks" element={<ProtectedRoute><Streaks /></ProtectedRoute>} />
-              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </HashRouter>
