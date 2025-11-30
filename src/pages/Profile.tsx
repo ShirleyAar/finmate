@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
-import { ChevronLeft, User, Mail, Camera, LogOut } from "lucide-react"; // Añadido LogOut
+import { ChevronLeft, User, Mail, Camera, LogOut } from "lucide-react"; // Agregamos LogOut
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Traemos handleLogout junto con user y setUser
+  // Traemos handleLogout del contexto
   const { user, setUser, handleLogout } = useApp();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -42,8 +42,8 @@ const Profile = () => {
 
   const handleLogoutClick = () => {
     handleLogout();
-    // La redirección al home es manejada por App.tsx o forzamos aquí
-    navigate("/");
+    // La redirección a home ocurre automáticamente al cambiar el estado de sesión
+    navigate("/"); 
   };
 
   return (
@@ -51,22 +51,19 @@ const Profile = () => {
       <DashboardHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/dashboard")}
-            className="text-muted-foreground hover:text-foreground p-0"
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Volver al Panel
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/dashboard")}
+          className="mb-4 text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Volver al Panel
+        </Button>
 
         <h1 className="text-3xl font-bold text-foreground mb-8">Mi Perfil</h1>
 
         <div className="max-w-2xl mx-auto">
-          
-          {/* TARJETA PRINCIPAL: DATOS Y LOGIN */}
+          {/* --- TARJETA PRINCIPAL (Datos + Logout) --- */}
           <Card className="p-8">
             <div className="flex flex-col items-center mb-8">
               <div className="relative">
@@ -161,11 +158,11 @@ const Profile = () => {
               </div>
             </form>
 
-            {/* --- NUEVO: BOTÓN DE CERRAR SESIÓN --- */}
+            {/* --- SECCIÓN NUEVA: CERRAR SESIÓN --- */}
             <div className="pt-8 border-t mt-8">
               <Button 
                 variant="destructive" 
-                className="w-full flex items-center justify-center gap-2 py-6 hover:bg-destructive/90 transition-colors shadow-sm text-lg font-medium"
+                className="w-full flex items-center justify-center gap-2 py-6 text-lg hover:bg-destructive/90 transition-colors shadow-sm"
                 onClick={handleLogoutClick}
               >
                 <LogOut className="h-5 w-5" />
@@ -174,7 +171,7 @@ const Profile = () => {
             </div>
           </Card>
 
-          {/* TARJETA PREMIUM (MANTENIDA) */}
+          {/* --- TARJETA PREMIUM (MANTENIDA) --- */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-accent/10 to-card border-accent/20">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -209,7 +206,7 @@ const Profile = () => {
             </Button>
           </Card>
 
-          {/* TARJETA PRIVACIDAD (MANTENIDA) */}
+          {/* --- TARJETA PRIVACIDAD (MANTENIDA) --- */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-trust-light to-card border-trust/20">
             <h3 className="font-semibold text-foreground mb-2">Privacidad y Seguridad</h3>
             <p className="text-sm text-muted-foreground">
