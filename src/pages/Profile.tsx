@@ -53,6 +53,7 @@ const Profile = () => {
     setIsEditing(false); 
   };
 
+  // Cancelar Edición
   const handleCancel = () => {
     
     if (user) {
@@ -218,33 +219,36 @@ const Profile = () => {
             </div>
           </Card>
 
-          {/* TARJETA PREMIUM CON ACCIÓN */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-accent/10 to-card border-accent/20">
-            <h3 className="font-semibold text-foreground mb-2 text-lg">FinMate Premium ✨</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Desbloquea todas las funciones avanzadas
-            </p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-foreground mb-2 text-lg">FinMate Premium ✨</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Desbloquea todas las funciones avanzadas
+                </p>
+              </div>
+            </div>
             
             <ul className="space-y-2 mb-6 text-sm">
               <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span> Simulador de estrategias
+                <span className="text-growth">✓</span>
+                Simulador de estrategias de pago avanzadas
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span> Análisis predictivo
+                <span className="text-growth">✓</span>
+                Análisis predictivo de tu deuda
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span> Exportación PDF
+                <span className="text-growth">✓</span>
+                Exportación de reportes en PDF
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
-                <span className="text-growth">✓</span> Soporte 24/7
+                <span className="text-growth">✓</span>
+                Soporte prioritario 24/7
               </li>
             </ul>
 
-            {/* BOTÓN CON FUNCIÓN CONECTADA */}
-            <Button 
-              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
-              onClick={handlePremiumClick}
-            >
+            <Button className="w-full bg-accent hover:bg-accent/90 text-white font-semibold">
               Actualizar a Premium
             </Button>
           </Card>
@@ -252,7 +256,8 @@ const Profile = () => {
           <Card className="mt-6 p-6 bg-gradient-to-r from-trust-light to-card border-trust/20">
             <h3 className="font-semibold text-foreground mb-2">Privacidad y Seguridad</h3>
             <p className="text-sm text-muted-foreground">
-              Tus datos están seguros con nosotros.
+              Tus datos están seguros con nosotros. No solicitamos información bancaria 
+              ni compartimos tus datos personales con terceros.
             </p>
           </Card>
         </div>
