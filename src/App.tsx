@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
+import { useState, useEffect } from "react"; 
+
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -20,10 +22,55 @@ import Streaks from "./pages/Streaks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const isLoggedIn = sessionStorage.getItem('is_logged_in') === 'true';
+  if (!isLoggedIn) {
+    return <Navigate to="/register" replace />;
+  }
+  return children;
+};
 
-const App = () => (
+const App = () => {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let currentUserId = localStorage.getItem('guest_user_id');
+    if (!currentUserId) {
+      currentUserId = crypto.randomUUID();
+      localStorage.setItem('guest_user_id', currentUserId);
+    }
+    setUserId(currentUserId);
+
+    const sessionStatus = sessionStorage.getItem('is_logged_in') === 'true';
+    setIsLoggedIn(sessionStatus);
+
+    setAuthReady(true);
+  }, []);
+
+  const handleLogin = (id: string) => {
+    sessionStorage.setItem('is_logged_in', 'true');
+    setIsLoggedIn(true);
+  };
+  
+  const handleLogout = () => {
+    sessionStorage.removeItem('is_logged_in');
+    setIsLoggedIn(false);
+    window.location.reload(); 
+  };
+
+  if (!authReady) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <p className="text-xl font-semibold text-growth">Cargando...</p>
+      </div>
+    );
+  }
+
+  return (
   <QueryClientProvider client={queryClient}>
-    <AppProvider>
+    <AppProvider userId={userId} handleLogin={handleLogin} handleLogout={handleLogout}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -50,5 +97,5 @@ const App = () => (
     </AppProvider>
   </QueryClientProvider>
 );
-
+};
 export default App;
