@@ -18,6 +18,7 @@ const Register = () => {
   const { setUser, handleLogin, userId } = useApp();
   
   // DETECCIÓN AUTOMÁTICA: Si la URL termina en "/login", activamos modo Login
+  // Esto hace que si vienes del botón "Iniciar Sesión" del Home, veas el login directo.
   const isLoginMode = location.pathname === "/login";
 
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const Register = () => {
     termsAccepted: false,
   });
 
-  // Limpiar formulario al cambiar de modo
+  // Limpiar formulario al cambiar de modo (opcional, para que se vea limpio)
   useEffect(() => {
     setFormData({
         name: "",
@@ -164,7 +165,7 @@ const Register = () => {
                 {isLoginMode ? "¿No tienes cuenta? " : "¿Ya tienes una cuenta? "}
                 <button 
                     type="button" 
-                    // AQUÍ ESTÁ LA MAGIA: Cambiamos la URL
+                    // AQUÍ ESTÁ LA MAGIA: Cambiamos la URL para que sea consistente
                     onClick={() => navigate(isLoginMode ? "/register" : "/login")}
                     className="text-growth hover:underline font-medium focus:outline-none"
                 >

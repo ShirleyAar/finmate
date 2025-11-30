@@ -19,16 +19,6 @@ export interface Debt {
   notes?: string;
 }
 
-// === AQUÍ ESTÁ LA INTERFAZ QUE FALTABA ===
-export interface Payment {
-  id: string;
-  debtId: string;
-  debtName: string;
-  amount: number;
-  dueDate: string;
-  paid: boolean;
-}
-
 export interface ScheduledPayment {
   id: string;
   debtId: string;
@@ -75,45 +65,52 @@ export interface Streak {
   lastActivityDate: string;
 }
 
+// Interfaz que define el pago (faltaba en algunas versiones)
+export interface Payment {
+  id: string;
+  debtId: string;
+  debtName: string;
+  amount: number;
+  dueDate: string;
+  paid: boolean;
+}
+
 // Context type
 interface AppContextType {
+  // === PROPIEDADES DE SESIÓN ===
   userId: string | null;
   handleLogin: (id: string) => void;
   handleLogout: () => void;
 
+  // Propiedades del juego
   user: User | null;
   setUser: (user: User | null) => void;
   debts: Debt[];
   addDebt: (debt: Omit<Debt, "id">) => void;
   updateDebt: (id: string, debt: Partial<Debt>) => void;
   deleteDebt: (id: string) => void;
-  
-  payments: Payment[]; // Ahora esto funcionará porque Payment existe
-  markPaymentAsPaid: (id: string, paidAmount: number, expenseId: string) => void;
-  
   scheduledPayments: ScheduledPayment[];
   generatePaymentSchedule: (debtId: string, monthlyPayment: number, months: number) => void;
-  
+  markPaymentAsPaid: (id: string, paidAmount: number, expenseId: string) => void;
   transactions: Transaction[];
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
-  
   badges: Badge[];
   earnBadge: (id: string) => void;
-  
   challenges: Challenge[];
   updateChallengeProgress: (id: string, progress: number) => void;
-  
   streak: Streak;
   updateStreak: () => void;
-  
   getDebtProgress: () => number;
   getPlantStage: () => number;
+  payments: Payment[]; // Añadido para compatibilidad
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// === ESTA ES LA CORRECCIÓN CLAVE ===
+// Definimos que el Provider acepta las props de login
 interface AppProviderProps {
   children: ReactNode;
   userId: string | null;
@@ -136,6 +133,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     }
   };
 
+  // Datos iniciales
   const [debts, setDebts] = useState<Debt[]>([
     { id: "1", name: "Tarjeta de Crédito A", amount: 5200, paid: 1500, rate: 18.5, dueDate: "2025-12-15", cutoffDay: 15 },
     { id: "2", name: "Préstamo Personal B", amount: 4500, paid: 1200, rate: 12.0, dueDate: "2025-12-20", cutoffDay: 20 },
@@ -143,7 +141,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
   ]);
   
   const [scheduledPayments, setScheduledPayments] = useState<ScheduledPayment[]>([]);
-  
   const [transactions, setTransactions] = useState<Transaction[]>([
     { id: "1", type: "income", amount: 3000, category: "Salario", date: "2025-11-01", description: "Sueldo mensual", used: 0 },
     { id: "2", type: "expense", amount: 500, category: "Alimentación", date: "2025-11-05", description: "Supermercado", used: 0 },
@@ -168,7 +165,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     lastActivityDate: new Date().toISOString().split("T")[0],
   });
 
-  // Aquí se usa la interfaz Payment
   const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
@@ -328,10 +324,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     addDebt,
     updateDebt,
     deleteDebt,
-    payments,
-    markPaymentAsPaid,
     scheduledPayments,
     generatePaymentSchedule,
+    markPaymentAsPaid,
     transactions,
     addTransaction,
     updateTransaction,
@@ -344,6 +339,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     updateStreak,
     getDebtProgress,
     getPlantStage,
+    payments,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
