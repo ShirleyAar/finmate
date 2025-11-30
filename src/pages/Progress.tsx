@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import { ChevronLeft, Sprout, Flower2, Leaf } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { formatCurrency } from "@/lib/utils";
 
 const ProgressPage = () => {
   const navigate = useNavigate();
@@ -75,17 +76,17 @@ const ProgressPage = () => {
             <div className="space-y-6">
               <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                 <span className="text-muted-foreground">Deuda Total</span>
-                <span className="text-2xl font-bold text-foreground">${totalDebt.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-foreground">${formatCurrency(totalDebt)}</span>
               </div>
 
               <div className="flex justify-between items-center p-4 bg-growth/10 rounded-lg">
                 <span className="text-muted-foreground">Pagado</span>
-                <span className="text-2xl font-bold text-growth">${totalPaid.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-growth">${formatCurrency(totalPaid)}</span>
               </div>
 
               <div className="flex justify-between items-center p-4 bg-earth/10 rounded-lg">
                 <span className="text-muted-foreground">Restante</span>
-                <span className="text-2xl font-bold text-earth">${remaining.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-earth">${formatCurrency(remaining)}</span>
               </div>
 
               <div className="pt-4 border-t border-border">
@@ -130,7 +131,7 @@ const ProgressPage = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Pagado</span>
-                      <span className="font-medium">${debt.paid.toLocaleString()} / ${debt.amount.toLocaleString()}</span>
+                      <span className="font-medium">${formatCurrency(debt.paid)} / ${formatCurrency(debt.amount)}</span>
                     </div>
                     <Progress value={debtProgress} className="h-2" />
                     <div className="text-right">

@@ -6,13 +6,14 @@ import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import { Sprout, Mountain, Calendar, Award, MessageCircle, BookOpen, TrendingUp, Zap } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { formatCurrency } from "@/lib/utils";
 
 const Dashboard = () => {
-  const { debts, getDebtProgress, streak, payments } = useApp();
+  const { debts, getDebtProgress, streak, scheduledPayments } = useApp();
   
   const progress = getDebtProgress();
   const totalDebt = debts.reduce((sum, debt) => sum + debt.amount, 0);
-  const upcomingPaymentsCount = payments.filter(p => !p.paid).length;
+  const upcomingPaymentsCount = scheduledPayments.filter(p => !p.paid).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
@@ -57,7 +58,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">Montaña de Deudas</h3>
-                  <p className="text-sm text-muted-foreground mb-2">Deuda Total: ${totalDebt.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground mb-2">Deuda Total: ${formatCurrency(totalDebt)}</p>
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
                     {debts.slice(0, 3).map((debt) => (
                       <span key={debt.id} className="px-3 py-1 rounded-full bg-earth/20 text-xs font-medium text-earth">

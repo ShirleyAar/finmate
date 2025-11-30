@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { ChevronLeft, Plus, TrendingUp, TrendingDown, Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 
 const Income = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const Income = () => {
     category: "",
     date: new Date().toISOString().split("T")[0],
     description: "",
+    customCategory: "",
   });
 
   const categories = {
@@ -44,9 +46,14 @@ const Income = () => {
       return;
     }
 
+    const finalCategory = (formData.category === "Otros Ingresos" || formData.category === "Otros Gastos") && formData.customCategory
+      ? formData.customCategory
+      : formData.category;
+
     if (editingId) {
       updateTransaction(editingId, {
         ...formData,
+        category: finalCategory,
         amount: parseFloat(formData.amount),
       });
       toast({
@@ -55,8 +62,12 @@ const Income = () => {
       });
     } else {
       addTransaction({
-        ...formData,
+        type: formData.type,
         amount: parseFloat(formData.amount),
+        category: finalCategory,
+        date: formData.date,
+        description: formData.description,
+        used: 0,
       });
       toast({
         title: "Transacción Agregada",
@@ -75,6 +86,7 @@ const Income = () => {
       category: transaction.category,
       date: transaction.date,
       description: transaction.description,
+      customCategory: "",
     });
     setIsDialogOpen(true);
   };
@@ -96,6 +108,7 @@ const Income = () => {
       category: "",
       date: new Date().toISOString().split("T")[0],
       description: "",
+      customCategory: "",
     });
   };
 
@@ -146,7 +159,7 @@ const Income = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ingresos Totales</p>
-                <p className="text-2xl font-bold text-growth">${totalIncome.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-growth">${formatCurrency(totalIncome)}</p>
               </div>
             </div>
           </Card>
@@ -158,7 +171,7 @@ const Income = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Gastos Totales</p>
-                <p className="text-2xl font-bold text-destructive">${totalExpense.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-destructive">${formatCurrency(totalExpense)}</p>
               </div>
             </div>
           </Card>
@@ -171,7 +184,7 @@ const Income = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Balance</p>
                 <p className={`text-2xl font-bold ${balance >= 0 ? "text-trust" : "text-earth"}`}>
-                  ${Math.abs(balance).toLocaleString()}
+                  ${formatCurrency(Math.abs(balance))}
                 </p>
               </div>
             </div>
@@ -221,7 +234,7 @@ const Income = () => {
                     <div className={`text-xl font-bold ${
                       transaction.type === "income" ? "text-growth" : "text-destructive"
                     }`}>
-                      {transaction.type === "income" ? "+" : "-"}${transaction.amount.toLocaleString()}
+                      {transaction.type === "income" ? "+" : "-"}${formatCurrency(transaction.amount)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
@@ -277,7 +290,7 @@ const Income = () => {
                 <Label>Categoría</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value) => setFormData({ ...formData, category: value, customCategory: "" })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona una categoría" />
@@ -291,6 +304,18 @@ const Income = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {(formData.category === "Otros Ingresos" || formData.category === "Otros Gastos") && (
+                <div className="space-y-2">
+                  <Label>Especificar {formData.type === "income" ? "Ingreso" : "Gasto"}</Label>
+                  <Input
+                    placeholder={`Ej: ${formData.type === "income" ? "Venta de ropa" : "Médico"}`}
+                    value={formData.customCategory}
+                    onChange={(e) => setFormData({ ...formData, customCategory: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Monto</Label>

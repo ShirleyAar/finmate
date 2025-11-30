@@ -1,27 +1,117 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import { ChevronLeft, Bell, CheckCircle2, Calendar } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 
 const Payments = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { payments, markPaymentAsPaid } = useApp();
+  const { scheduledPayments, markPaymentAsPaid, transactions, debts } = useApp();
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<typeof scheduledPayments[0] | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [selectedExpense, setSelectedExpense] = useState("");
 
-  const handleMarkAsPaid = (id: string) => {
-    markPaymentAsPaid(id);
-    toast({
-      title: "Pago Marcado",
-      description: "El pago ha sido marcado como completado",
-    });
+  const expenseTransactions = transactions.filter(t => t.type === "expense" && t.used < t.amount);
+
+  const handleOpenPaymentDialog = (payment: typeof scheduledPayments[0]) => {
+    setSelectedPayment(payment);
+    const remaining = payment.amount - payment.paidAmount;
+    setPaymentAmount(remaining.toFixed(2));
+    setSelectedExpense("");
+    setIsPaymentDialogOpen(true);
   };
 
-  const upcomingPayments = payments.filter(p => !p.paid);
-  const completedPayments = payments.filter(p => p.paid);
+  const handleConfirmPayment = () => {
+    if (!selectedPayment) return;
+
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+      toast({
+        title: "Monto Inválido",
+        description: "Por favor ingresa un monto válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedExpense) {
+      toast({
+        title: "Selección Requerida",
+        description: "Debes vincular este pago a uno o varios gastos registrados",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const expense = transactions.find(t => t.id === selectedExpense);
+    if (!expense) {
+      toast({
+        title: "Error",
+        description: "Gasto no encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const availableAmount = expense.amount - expense.used;
+    const paidAmount = parseFloat(paymentAmount);
+
+    if (paidAmount > availableAmount) {
+      toast({
+        title: "Monto Excedido",
+        description: `Este gasto solo tiene $${formatCurrency(availableAmount)} disponibles`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    markPaymentAsPaid(selectedPayment.id, paidAmount, selectedExpense);
+    
+    // Check if payment is partial or full
+    const debt = debts.find(d => d.id === selectedPayment.debtId);
+    if (debt) {
+      const isFullPayment = paidAmount >= selectedPayment.amount;
+      if (isFullPayment && debt.paid + paidAmount >= debt.amount) {
+        toast({
+          title: "¡Felicidades! 🥳",
+          description: "¡Has terminado de pagar esta deuda!",
+        });
+      } else if (isFullPayment) {
+        toast({
+          title: "Pago Completo",
+          description: `Pago de $${formatCurrency(paidAmount)} registrado exitosamente`,
+        });
+      } else {
+        toast({
+          title: "¡Por fin pagaste una parte de tu deuda! 🎉",
+          description: "¡Sigue así!",
+        });
+      }
+    }
+    
+    setIsPaymentDialogOpen(false);
+    setSelectedPayment(null);
+    setPaymentAmount("");
+    setSelectedExpense("");
+  };
+
+  const upcomingPayments = scheduledPayments
+    .filter(p => !p.paid)
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  
+  const completedPayments = scheduledPayments
+    .filter(p => p.paid)
+    .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
@@ -72,14 +162,21 @@ const Payments = () => {
                             <span>Vence: {new Date(payment.dueDate).toLocaleDateString('es-ES')}</span>
                           </div>
                           <div className="h-4 w-px bg-border"></div>
-                          <span className="font-bold text-foreground text-lg">
-                            ${payment.amount.toFixed(2)}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground text-lg">
+                              ${formatCurrency(payment.amount - payment.paidAmount)}
+                            </span>
+                            {payment.paidAmount > 0 && (
+                              <span className="text-xs text-growth">
+                                Pagado: ${formatCurrency(payment.paidAmount)} de ${formatCurrency(payment.amount)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                     <Button 
-                      onClick={() => handleMarkAsPaid(payment.id)}
+                      onClick={() => handleOpenPaymentDialog(payment)}
                       className="bg-growth hover:bg-growth/90 text-white font-semibold px-6"
                     >
                       Marcar como Pagado
@@ -108,7 +205,7 @@ const Payments = () => {
                       <div>
                         <h4 className="font-medium text-foreground">{payment.debtName}</h4>
                         <span className="text-sm text-muted-foreground">
-                          ${payment.amount.toFixed(2)} • {new Date(payment.dueDate).toLocaleDateString('es-ES')}
+                          ${formatCurrency(payment.amount)} • {new Date(payment.dueDate).toLocaleDateString('es-ES')}
                         </span>
                       </div>
                     </div>
@@ -119,6 +216,88 @@ const Payments = () => {
             </div>
           </div>
         )}
+
+        {/* Payment Dialog */}
+        <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Registrar Pago</DialogTitle>
+            </DialogHeader>
+            {selectedPayment && (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">{selectedPayment.debtName}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Monto del mes: ${formatCurrency(selectedPayment.amount)}
+                  </p>
+                  {selectedPayment.paidAmount > 0 && (
+                    <p className="text-sm text-growth mt-1">
+                      Ya pagado: ${formatCurrency(selectedPayment.paidAmount)} • Pendiente: ${formatCurrency(selectedPayment.amount - selectedPayment.paidAmount)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Monto Pagado</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Vincular con Gasto Registrado (Obligatorio) *</Label>
+                  {expenseTransactions.length === 0 ? (
+                    <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <p className="text-sm text-destructive">
+                        No hay gastos disponibles. Debes registrar un gasto primero en "Ingresos y Gastos".
+                      </p>
+                    </div>
+                  ) : (
+                    <Select value={selectedExpense} onValueChange={setSelectedExpense} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un gasto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {expenseTransactions.map((transaction) => {
+                          const available = transaction.amount - transaction.used;
+                          return (
+                            <SelectItem key={transaction.id} value={transaction.id}>
+                              {transaction.category} - ${formatCurrency(transaction.amount)} (Disponible: ${formatCurrency(available)})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    * Debes seleccionar de qué gasto provino el dinero para este pago. Puedes dividir un gasto entre varias deudas.
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    onClick={handleConfirmPayment}
+                    className="flex-1 bg-growth hover:bg-growth/90 text-white"
+                  >
+                    Confirmar Pago
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsPaymentDialogOpen(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
       
       <Footer />
