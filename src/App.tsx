@@ -3,11 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider } from "./contexts/AppContext";
+import { AppProvider } from "./contexts/AppContext"; 
 import { useState, useEffect } from "react"; 
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
+// Nota: Login.tsx ya no es necesario, Register maneja ambos
 import Dashboard from "./pages/Dashboard";
 import DebtDetails from "./pages/DebtDetails";
 import Lessons from "./pages/Lessons";
@@ -22,10 +23,12 @@ import Streaks from "./pages/Streaks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Guardia de seguridad
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isLoggedIn = sessionStorage.getItem('is_logged_in') === 'true';
   if (!isLoggedIn) {
-    return <Navigate to="/register" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 };
@@ -68,7 +71,7 @@ const App = () => {
     );
   }
 
-   return (
+  return (
     <QueryClientProvider client={queryClient}>
       <AppProvider userId={userId} handleLogin={handleLogin} handleLogout={handleLogout}> 
         <TooltipProvider>
@@ -76,12 +79,16 @@ const App = () => {
           <Sonner />
           <HashRouter>
             <Routes>
-              {/* Ruta Principal: Home */}
+              {/* Home es la entrada principal */}
               <Route path="/" element={<Home />} />
               
-              {/* Ruta de Registro/Login (Única entrada) */}
+              {/* Ambas rutas usan el mismo componente inteligente */}
               <Route 
                   path="/register" 
+                  element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
+              />
+              <Route 
+                  path="/login" 
                   element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} 
               />
               

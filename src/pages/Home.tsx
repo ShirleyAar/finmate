@@ -48,6 +48,7 @@ const Home = () => {
               </Button>
               
               <Button 
+                // AQUÍ ESTABA EL POSIBLE ERROR: Asegúrate de que apunte a "/login"
                 onClick={() => navigate("/login")}
                 variant="outline"
                 className="border-2 border-growth text-growth hover:bg-green-50 font-bold px-10 py-7 text-lg rounded-xl w-full sm:w-auto transition-all duration-300"
