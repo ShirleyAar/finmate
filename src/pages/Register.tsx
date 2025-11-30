@@ -17,9 +17,14 @@ const Register = () => {
   const { toast } = useToast();
   const { setUser, handleLogin, userId } = useApp();
   
-  // DETECCIÓN AUTOMÁTICA: Si la URL termina en "/login", activamos modo Login
-  // Esto hace que si vienes del botón "Iniciar Sesión" del Home, veas el login directo.
-  const isLoginMode = location.pathname === "/login";
+  // ESTADO INTERNO: Determina si mostramos el login o el registro
+  // Inicializamos basado en la URL
+  const [isLoginMode, setIsLoginMode] = useState(location.pathname === "/login");
+
+  // EFECTO: Si la URL cambia, actualizamos el modo automáticamente
+  useEffect(() => {
+    setIsLoginMode(location.pathname === "/login");
+  }, [location.pathname]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -28,7 +33,7 @@ const Register = () => {
     termsAccepted: false,
   });
 
-  // Limpiar formulario al cambiar de modo (opcional, para que se vea limpio)
+  // Limpiar formulario al cambiar de modo (opcional)
   useEffect(() => {
     setFormData({
         name: "",
@@ -165,7 +170,7 @@ const Register = () => {
                 {isLoginMode ? "¿No tienes cuenta? " : "¿Ya tienes una cuenta? "}
                 <button 
                     type="button" 
-                    // AQUÍ ESTÁ LA MAGIA: Cambiamos la URL para que sea consistente
+                    // AQUÍ ESTÁ LA MAGIA: Cambiamos la URL para que React Router haga su trabajo
                     onClick={() => navigate(isLoginMode ? "/register" : "/login")}
                     className="text-growth hover:underline font-medium focus:outline-none"
                 >
