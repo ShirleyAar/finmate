@@ -13,20 +13,18 @@ import { useToast } from "@/hooks/use-toast";
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Traemos los datos y funciones del contexto
   const { user, setUser, handleLogout } = useApp();
-  
-  // Estado para controlar si estamos editando (false = solo lectura, true = edición)
+
   const [isEditing, setIsEditing] = useState(false);
 
-  // Estado local para los datos del formulario
+ 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     avatar: "",
   });
 
-  // Efecto: Cargar datos del usuario al entrar o cuando cambien
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -37,11 +35,10 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Manejar envío del formulario (Guardar)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Guardar en el contexto (y localStorage)
     setUser({
       name: formData.name,
       email: formData.email,
@@ -50,32 +47,35 @@ const Profile = () => {
 
     toast({
       title: "Perfil Actualizado",
-      description: "Tus cambios han sido guardados exitosamente.",
+      description: "Tus datos se han guardado correctamente.",
     });
     
-    setIsEditing(false); // Volver a modo lectura
+    setIsEditing(false); 
   };
 
-  // Manejar cancelación (Revertir cambios)
   const handleCancel = () => {
-    setFormData({
-      name: user?.name || "",
-      email: user?.email || "",
-      avatar: user?.avatar || "",
-    });
+    
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        avatar: user.avatar || "",
+      });
+    }
     setIsEditing(false);
   };
 
   const handleLogoutClick = () => {
     handleLogout();
-    // La redirección al home es manejada por App.tsx o forzamos aquí
     navigate("/");
   };
 
+  
   const handlePremiumClick = () => {
     toast({
-      title: "✨ ¡Próximamente!",
-      description: "Estamos trabajando en las funciones Premium. ¡Espéralas pronto!",
+      title: "✨ Función Premium",
+      description: "¡Próximamente podrás suscribirte para obtener herramientas avanzadas!",
+      duration: 3000,
     });
   };
 
@@ -99,7 +99,7 @@ const Profile = () => {
 
         <div className="max-w-2xl mx-auto">
           
-          <Card className="p-8">
+          <Card className="p-8 animate-fade-in">
             <div className="flex flex-col items-center mb-8">
               {/* AVATAR */}
               <div className="relative group">
@@ -115,13 +115,13 @@ const Profile = () => {
                   )}
                 </div>
                 
-                {/* Botón de cámara (Solo visible al editar) */}
+                {/* Botón flotante para cambiar foto (visible al editar) */}
                 {isEditing && (
                   <button 
                     type="button"
                     className="absolute bottom-0 right-0 p-2 rounded-full bg-growth text-white hover:bg-growth/90 transition-colors shadow-md cursor-pointer z-10"
                     onClick={() => {
-                      const url = prompt("Ingresa la URL de una imagen para tu avatar:");
+                      const url = prompt("Ingresa la URL de tu imagen:");
                       if (url) setFormData({ ...formData, avatar: url });
                     }}
                     title="Cambiar foto"
@@ -131,7 +131,7 @@ const Profile = () => {
                 )}
               </div>
               
-              {/* Nombre (Solo lectura) */}
+              {/* Nombre en modo lectura */}
               {!isEditing && (
                 <div className="text-center mt-4">
                   <h2 className="text-xl font-semibold text-foreground">
@@ -143,7 +143,7 @@ const Profile = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Campo Nombre */}
+              {/* CAMPO NOMBRE */}
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre</Label>
                 <Input
@@ -151,13 +151,14 @@ const Profile = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled={!isEditing} // ¡AQUÍ ESTÁ LA CLAVE!
+                  disabled={!isEditing} 
                   required
-                  className={!isEditing ? "bg-muted/50 border-transparent text-muted-foreground cursor-not-allowed" : ""}
+                  // Estilo visual cuando está deshabilitado
+                  className={!isEditing ? "bg-muted/30 border-transparent text-muted-foreground opacity-100" : "bg-white"}
                 />
               </div>
 
-              {/* Campo Email */}
+              {/* CAMPO EMAIL */}
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
                 <div className="flex items-center gap-2">
@@ -167,17 +168,16 @@ const Profile = () => {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={!isEditing} // ¡AQUÍ ESTÁ LA CLAVE!
+                    disabled={!isEditing} 
                     required
-                    className={`flex-1 ${!isEditing ? "bg-muted/50 border-transparent text-muted-foreground cursor-not-allowed" : ""}`}
+                    className={`flex-1 ${!isEditing ? "bg-muted/30 border-transparent text-muted-foreground opacity-100" : "bg-white"}`}
                   />
                 </div>
               </div>
 
-              {/* Botones de Acción (Cambian según el estado) */}
+              {/* BOTONES DE ACCIÓN */}
               <div className="flex gap-4 pt-4">
                 {!isEditing ? (
-                  // MODO LECTURA: Mostrar botón "Editar"
                   <Button 
                     type="button"
                     onClick={() => setIsEditing(true)} 
@@ -186,7 +186,6 @@ const Profile = () => {
                     Editar Perfil
                   </Button>
                 ) : (
-                  // MODO EDICIÓN: Mostrar "Guardar" y "Cancelar"
                   <>
                     <Button 
                       type="submit"
@@ -207,7 +206,6 @@ const Profile = () => {
               </div>
             </form>
 
-            {/* Botón Cerrar Sesión */}
             <div className="pt-8 border-t mt-8">
               <Button 
                 variant="destructive" 
@@ -220,7 +218,7 @@ const Profile = () => {
             </div>
           </Card>
 
-          {/* Tarjeta Premium */}
+          {/* TARJETA PREMIUM CON ACCIÓN */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-accent/10 to-card border-accent/20">
             <h3 className="font-semibold text-foreground mb-2 text-lg">FinMate Premium ✨</h3>
             <p className="text-sm text-muted-foreground mb-4">
@@ -242,6 +240,7 @@ const Profile = () => {
               </li>
             </ul>
 
+            {/* BOTÓN CON FUNCIÓN CONECTADA */}
             <Button 
               className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
               onClick={handlePremiumClick}
@@ -250,7 +249,6 @@ const Profile = () => {
             </Button>
           </Card>
 
-          {/* Tarjeta Privacidad */}
           <Card className="mt-6 p-6 bg-gradient-to-r from-trust-light to-card border-trust/20">
             <h3 className="font-semibold text-foreground mb-2">Privacidad y Seguridad</h3>
             <p className="text-sm text-muted-foreground">
