@@ -13,19 +13,20 @@ import { useToast } from "@/hooks/use-toast";
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  // Traemos los datos y funciones del contexto
   const { user, setUser, handleLogout } = useApp();
   
+  // Estado para controlar si estamos editando (false = solo lectura, true = edición)
   const [isEditing, setIsEditing] = useState(false);
 
- 
+  // Estado local para los datos del formulario
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     avatar: "",
   });
 
-  
+  // Efecto: Cargar datos del usuario al entrar o cuando cambien
   useEffect(() => {
     if (user) {
       setFormData({
@@ -36,11 +37,11 @@ const Profile = () => {
     }
   }, [user]);
 
-  
+  // Manejar envío del formulario (Guardar)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    
+    // Guardar en el contexto (y localStorage)
     setUser({
       name: formData.name,
       email: formData.email,
@@ -52,10 +53,10 @@ const Profile = () => {
       description: "Tus cambios han sido guardados exitosamente.",
     });
     
-    setIsEditing(false); 
+    setIsEditing(false); // Volver a modo lectura
   };
 
-
+  // Manejar cancelación (Revertir cambios)
   const handleCancel = () => {
     setFormData({
       name: user?.name || "",
@@ -67,6 +68,7 @@ const Profile = () => {
 
   const handleLogoutClick = () => {
     handleLogout();
+    // La redirección al home es manejada por App.tsx o forzamos aquí
     navigate("/");
   };
 
