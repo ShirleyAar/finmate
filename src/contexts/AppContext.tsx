@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { toast } from "sonner";
 
-// Types
+// =================================================================
+// 1. TIPOS (TYPES)
+// =================================================================
+
 export interface User {
   name: string;
   email: string;
   avatar?: string;
+  registeredAt?: string;
 }
 
 export interface Debt {
@@ -17,6 +22,7 @@ export interface Debt {
   cutoffDay?: number;
   termMonths?: number;
   notes?: string;
+  countedInProgress: boolean;
 }
 
 export interface ScheduledPayment {
@@ -49,6 +55,26 @@ export interface Badge {
   icon: string;
 }
 
+export interface GardenPlant {
+  id: string;
+  name: string;
+  tier: number;
+  requiredDebts: number;
+  stage: number; 
+  completed: boolean;
+  completedAt?: string;
+  unlockedAt?: string;
+}
+
+export interface GardenBadge {
+  id: string;
+  plantId: string;
+  name: string;
+  description: string;
+  icon: string;
+  awardedAt?: string;
+}
+
 export interface Challenge {
   id: string;
   title: string;
@@ -65,31 +91,26 @@ export interface Streak {
   lastActivityDate: string;
 }
 
-// Interfaz que define el pago (faltaba en algunas versiones)
-export interface Payment {
-  id: string;
-  debtId: string;
-  debtName: string;
-  amount: number;
-  dueDate: string;
-  paid: boolean;
-}
+const PLANT_CATALOG: { name: string; icon: string }[] = [
+  { name: "Rosa", icon: "🌹" },
+  { name: "Girasol", icon: "🌻" },
+  { name: "Orquídea", icon: "🌸" },
+  { name: "Tulipán", icon: "🌷" },
+  { name: "Lirio", icon: "💐" },
+  { name: "Margarita", icon: "🌼" },
+  { name: "Jazmín", icon: "🪻" },
+  { name: "Lavanda", icon: "💜" },
+];
 
 // Context type
 interface AppContextType {
-  // === PROPIEDADES DE SESIÓN ===
-  userId: string | null;
-  handleLogin: (id: string) => void;
-  handleLogout: () => void;
-
-  // Propiedades del juego
   user: User | null;
   setUser: (user: User | null) => void;
   debts: Debt[];
-  addDebt: (debt: Omit<Debt, "id">) => void;
+  addDebt: (debt: Omit<Debt, "id" | "countedInProgress">) => void;
   updateDebt: (id: string, debt: Partial<Debt>) => void;
   deleteDebt: (id: string) => void;
-  scheduledPayments: ScheduledPayment[];
+  scheduledPayments: ScheduledPayment[]; 
   generatePaymentSchedule: (debtId: string, monthlyPayment: number, months: number) => void;
   markPaymentAsPaid: (id: string, paidAmount: number, expenseId: string) => void;
   transactions: Transaction[];
@@ -104,13 +125,25 @@ interface AppContextType {
   updateStreak: () => void;
   getDebtProgress: () => number;
   getPlantStage: () => number;
-  payments: Payment[]; // Añadido para compatibilidad
+  // Garden system
+  historicalDebtsPaid: number;
+  gardenPlants: GardenPlant[];
+  gardenBadges: GardenBadge[];
+  getCurrentPlant: () => GardenPlant | null;
+  getCompletedPlants: () => GardenPlant[];
+  // Sesión (Añadido para App.tsx)
+  userId: string | null;
+  handleLogin: (id: string) => void;
+  handleLogout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// === ESTA ES LA CORRECCIÓN CLAVE ===
-// Definimos que el Provider acepta las props de login
+// =================================================================
+// 2. IMPLEMENTACIÓN DEL PROVEEDOR (PROVIDER)
+// =================================================================
+
+// Propiedades que App.tsx pasa al AppProvider
 interface AppProviderProps {
   children: ReactNode;
   userId: string | null;
@@ -119,28 +152,35 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, handleLogin, handleLogout }) => {
+  
   const [user, setUserState] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('finmate_user_data');
+    const storedUser = localStorage.getItem('klimba_user_data');
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  // CORRECCIÓN CLAVE: MANEJA EL TIPO 'User' COMPLETO
   const setUser = (u: User | null) => {
     setUserState(u);
     if (u) {
-      localStorage.setItem('finmate_user_data', JSON.stringify(u));
+      // Aseguramos que registeredAt tenga un valor si se está creando un nuevo usuario
+      localStorage.setItem('klimba_user_data', JSON.stringify({
+          ...u,
+          registeredAt: u.registeredAt || new Date().toISOString(),
+      }));
     } else {
-      localStorage.removeItem('finmate_user_data');
+      localStorage.removeItem('klimba_user_data');
     }
   };
 
   // Datos iniciales
   const [debts, setDebts] = useState<Debt[]>([
-    { id: "1", name: "Tarjeta de Crédito A", amount: 5200, paid: 1500, rate: 18.5, dueDate: "2025-12-15", cutoffDay: 15 },
-    { id: "2", name: "Préstamo Personal B", amount: 4500, paid: 1200, rate: 12.0, dueDate: "2025-12-20", cutoffDay: 20 },
-    { id: "3", name: "Crédito de Tienda C", amount: 2750, paid: 800, rate: 21.0, dueDate: "2025-12-10", cutoffDay: 10 },
+    { id: "1", name: "Tarjeta de Crédito A", amount: 5200, paid: 1500, rate: 18.5, dueDate: "2025-12-15", cutoffDay: 15, countedInProgress: false },
+    { id: "2", name: "Préstamo Personal B", amount: 4500, paid: 1200, rate: 12.0, dueDate: "2025-12-20", cutoffDay: 20, countedInProgress: false },
+    { id: "3", name: "Crédito de Tienda C", amount: 2750, paid: 800, rate: 21.0, dueDate: "2025-12-10", cutoffDay: 10, countedInProgress: false },
   ]);
   
   const [scheduledPayments, setScheduledPayments] = useState<ScheduledPayment[]>([]);
+  
   const [transactions, setTransactions] = useState<Transaction[]>([
     { id: "1", type: "income", amount: 3000, category: "Salario", date: "2025-11-01", description: "Sueldo mensual", used: 0 },
     { id: "2", type: "expense", amount: 500, category: "Alimentación", date: "2025-11-05", description: "Supermercado", used: 0 },
@@ -165,47 +205,161 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     lastActivityDate: new Date().toISOString().split("T")[0],
   });
 
-  const [payments, setPayments] = useState<Payment[]>([]);
+  // Garden System State
+  const [historicalDebtsPaid, setHistoricalDebtsPaid] = useState<number>(0);
+  const [gardenPlants, setGardenPlants] = useState<GardenPlant[]>([]);
+  const [gardenBadges, setGardenBadges] = useState<GardenBadge[]>([]);
+
+  // Initialize garden on mount
+  useEffect(() => {
+    // Si no hay datos previos en localStorage, inicializa el estado del jardín
+    if (historicalDebtsPaid === 0) {
+      updateGardenState(0);
+    }
+  }, []);
 
   useEffect(() => {
-    const generatedPayments = debts.map(debt => ({
-      id: `payment-${debt.id}`,
-      debtId: debt.id,
-      debtName: debt.name,
-      amount: (debt.amount - debt.paid) / 12,
-      dueDate: debt.dueDate,
-      paid: false,
-    }));
-    setPayments(generatedPayments);
-  }, [debts]);
+    updateGardenState(historicalDebtsPaid);
+  }, [historicalDebtsPaid]);
 
+
+  // Update garden state based on historical debts paid
+  const updateGardenState = (totalPaid: number) => {
+    const completedPlantsCount = Math.floor(totalPaid / 5);
+    const currentStage = totalPaid % 5;
+    
+    const newPlants: GardenPlant[] = [];
+    const newBadges: GardenBadge[] = [];
+    
+    // Create completed plants
+    for (let i = 0; i < completedPlantsCount; i++) {
+      const plantInfo = PLANT_CATALOG[i % PLANT_CATALOG.length];
+      newPlants.push({
+        id: `plant-${i + 1}`,
+        name: plantInfo.name,
+        tier: i + 1,
+        requiredDebts: 5,
+        stage: 4, // Florecida
+        completed: true,
+        completedAt: new Date().toISOString(),
+        unlockedAt: new Date().toISOString(),
+      });
+      
+      newBadges.push({
+        id: `garden-badge-${i + 1}`,
+        plantId: `plant-${i + 1}`,
+        name: `Jardinero de ${plantInfo.name}`,
+        description: `Completaste 5 deudas y desbloqueaste la ${plantInfo.name}`,
+        icon: plantInfo.icon,
+        awardedAt: new Date().toISOString(),
+      });
+    }
+    
+    // Create current plant in progress (if not at a multiple of 5)
+    if (currentStage > 0 || completedPlantsCount === 0) {
+      const currentPlantIndex = completedPlantsCount;
+      const plantInfo = PLANT_CATALOG[currentPlantIndex % PLANT_CATALOG.length];
+      newPlants.push({
+        id: `plant-${currentPlantIndex + 1}`,
+        name: plantInfo.name,
+        tier: currentPlantIndex + 1,
+        requiredDebts: 5,
+        stage: currentStage,
+        completed: false,
+        unlockedAt: new Date().toISOString(),
+      });
+    }
+    
+    setGardenPlants(newPlants);
+    setGardenBadges(newBadges);
+  };
+
+  // Count a debt as completed (only once)
+  const countDebtAsCompleted = (debtId: string) => {
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt || debt.countedInProgress) return;
+    
+    // Mark debt as counted
+    setDebts(prev => prev.map(d => 
+      d.id === debtId ? { ...d, countedInProgress: true } : d
+    ));
+    
+    const newTotal = historicalDebtsPaid + 1;
+    setHistoricalDebtsPaid(newTotal);
+    
+    // Show notification
+    toast.success("¡Genial! Has pagado por completo una deuda. Tu progreso histórico aumentó +1.", {
+      duration: 4000,
+    });
+    
+    // Check if completing a plant (every 5 debts)
+    if (newTotal % 5 === 0) {
+      const plantIndex = Math.floor(newTotal / 5) - 1;
+      const plantInfo = PLANT_CATALOG[plantIndex % PLANT_CATALOG.length];
+      const nextPlantInfo = PLANT_CATALOG[(plantIndex + 1) % PLANT_CATALOG.length];
+      
+      setTimeout(() => {
+        toast.success(`¡Felicidades! 🎉 Has desbloqueado la ${plantInfo.name} y ganado la insignia Jardinero de ${plantInfo.name}. Sigue así.`, {
+          duration: 6000,
+        });
+        
+        setTimeout(() => {
+          toast.info(`Nuevo nivel desbloqueado: ahora tienes la semilla del ${nextPlantInfo.name}. Completa 5 deudas más para hacerlo florecer.`, {
+            duration: 5000,
+          });
+        }, 2000);
+      }, 1000);
+    }
+    
+    updateGardenState(newTotal);
+  };
+
+  // Generate payment schedule for a debt with proper proration
   const generatePaymentSchedule = (debtId: string, monthlyPayment: number, months: number) => {
     const debt = debts.find(d => d.id === debtId);
     if (!debt) return;
+
+    // Remove existing payments for this debt
     setScheduledPayments(prev => prev.filter(p => p.debtId !== debtId));
+
     const cutoffDay = debt.cutoffDay || new Date(debt.dueDate).getDate();
     const newPayments: ScheduledPayment[] = [];
+    const pendingAmount = debt.amount - debt.paid;
+
+    // Proper proration algorithm to avoid cent discrepancies
+    const basePayment = Math.round((pendingAmount / months) * 100) / 100;
+    const totalWithBase = Math.round(basePayment * months * 100) / 100;
+    const difference = Math.round((pendingAmount - totalWithBase) * 100) / 100;
+
     for (let i = 1; i <= months; i++) {
       const paymentDate = new Date();
       paymentDate.setMonth(paymentDate.getMonth() + i);
       paymentDate.setDate(cutoffDay);
-      const amount = i === months ? debt.amount - debt.paid - (monthlyPayment * (months - 1)) : monthlyPayment;
-      newPayments.push({
-        id: `scheduled-${debtId}-${i}`,
-        debtId: debt.id,
-        debtName: debt.name,
-        amount: Math.max(0, amount),
-        dueDate: paymentDate.toISOString().split('T')[0],
-        paid: false,
-        paidAmount: 0,
-        monthNumber: i,
-      });
+
+      const amount = i === 1 
+        ? Math.round((basePayment + difference) * 100) / 100
+        : basePayment;
+
+      if (amount > 0) {
+        newPayments.push({
+          id: `scheduled-${debtId}-${i}`,
+          debtId: debt.id,
+          debtName: debt.name,
+          amount: amount,
+          dueDate: paymentDate.toISOString().split('T')[0],
+          paid: false,
+          paidAmount: 0,
+          monthNumber: i,
+        });
+      }
     }
+
     setScheduledPayments(prev => [...prev, ...newPayments]);
   };
 
-  const addDebt = (debt: Omit<Debt, "id">) => {
-    const newDebt = { ...debt, id: Date.now().toString() };
+  // Debt functions
+  const addDebt = (debt: Omit<Debt, "id" | "countedInProgress">) => {
+    const newDebt = { ...debt, id: Date.now().toString(), countedInProgress: false };
     setDebts(prev => [...prev, newDebt]);
   };
 
@@ -214,41 +368,59 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
   };
 
   const deleteDebt = (id: string) => {
+    const debt = debts.find(d => d.id === id);
+    if (debt?.countedInProgress) {
+      toast.warning("Atención: esta deuda ya cuenta en tu historia de progreso. Eliminarla no borrará tu logro histórico.", {
+        duration: 5000,
+      });
+    }
     setDebts(prev => prev.filter(debt => debt.id !== id));
+    // Also remove scheduled payments for this debt
+    setScheduledPayments(prev => prev.filter(p => p.debtId !== id));
   };
 
+  // Payment functions
   const markPaymentAsPaid = (id: string, paidAmount: number, expenseId: string) => {
     const payment = scheduledPayments.find(p => p.id === id);
     if (!payment) return;
+    
     const debt = debts.find(d => d.id === payment.debtId);
     if (!debt) return;
+
     const newPaymentPaidAmount = payment.paidAmount + paidAmount;
     const isPaymentComplete = newPaymentPaidAmount >= payment.amount;
-    setScheduledPayments(prev => prev.map(p => p.id === id ? { ...p, paidAmount: newPaymentPaidAmount, paid: isPaymentComplete } : p));
     const newDebtPaid = debt.paid + paidAmount;
+
     updateDebt(payment.debtId, { paid: newDebtPaid });
-    
-    if (newDebtPaid >= debt.amount) {
-      setScheduledPayments(prev => prev.filter(p => p.debtId !== payment.debtId || p.paid || p.id === id));
-    } else if (isPaymentComplete) {
-      const nextMonthNumber = payment.monthNumber + 1;
-      const nextDueDate = new Date(payment.dueDate);
-      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-      const hasNextMonth = scheduledPayments.some(p => p.debtId === payment.debtId && p.monthNumber === nextMonthNumber);
-      if (!hasNextMonth) {
-        const newPayment: ScheduledPayment = {
-          id: Date.now().toString(),
-          debtId: payment.debtId,
-          debtName: payment.debtName,
-          amount: payment.amount,
-          dueDate: nextDueDate.toISOString().split('T')[0],
-          paid: false,
-          paidAmount: 0,
-          monthNumber: nextMonthNumber,
-        };
-        setScheduledPayments(prev => [...prev, newPayment]);
+
+    // Check if debt is fully paid
+    const isDebtFullyPaid = newDebtPaid >= debt.amount;
+
+    if (isDebtFullyPaid) {
+      // Count this debt as completed for garden progress
+      if (!debt.countedInProgress) {
+        countDebtAsCompleted(payment.debtId);
       }
+      
+      setScheduledPayments(prev => {
+        const updated = prev.map(p => {
+          if (p.id === id) {
+            return { ...p, paidAmount: newPaymentPaidAmount, paid: true };
+          }
+          return p;
+        });
+        return updated.filter(p => p.debtId !== payment.debtId || p.paid);
+      });
+    } else {
+      setScheduledPayments(prev => prev.map(p => 
+        p.id === id ? { 
+          ...p, 
+          paidAmount: newPaymentPaidAmount,
+          paid: isPaymentComplete 
+        } : p
+      ));
     }
+
     setTransactions(prev => prev.map(transaction => {
       if (transaction.id === expenseId && transaction.type === "expense") {
         return { ...transaction, used: transaction.used + paidAmount };
@@ -257,6 +429,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     }));
   };
 
+  // Transaction functions
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction = { ...transaction, id: Date.now().toString(), used: 0 };
     setTransactions(prev => [...prev, newTransaction]);
@@ -270,10 +443,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
+  // Badge functions
   const earnBadge = (id: string) => {
-    setBadges(prev => prev.map(badge => badge.id === id ? { ...badge, earned: true, date: new Date().toISOString().split("T")[0] } : badge));
+    setBadges(prev => prev.map(badge => 
+      badge.id === id ? { ...badge, earned: true, date: new Date().toISOString().split("T")[0] } : badge
+    ));
   };
 
+  // Challenge functions
   const updateChallengeProgress = (id: string, progress: number) => {
     setChallenges(prev => prev.map(challenge => {
       if (challenge.id === id) {
@@ -284,26 +461,39 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     }));
   };
 
+  // Streak functions
   const updateStreak = () => {
     const today = new Date().toISOString().split("T")[0];
     const lastDate = new Date(streak.lastActivityDate);
     const todayDate = new Date(today);
     const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return;
-    else if (diffDays === 1) {
+
+    if (diffDays === 0) {
+      return;
+    } else if (diffDays === 1) {
       const newCurrent = streak.current + 1;
-      setStreak({ current: newCurrent, longest: Math.max(newCurrent, streak.longest), lastActivityDate: today });
+      setStreak({
+        current: newCurrent,
+        longest: Math.max(newCurrent, streak.longest),
+        lastActivityDate: today,
+      });
     } else {
-      setStreak({ current: 1, longest: streak.longest, lastActivityDate: today });
+      setStreak({
+        current: 1,
+        longest: streak.longest,
+        lastActivityDate: today,
+      });
     }
   };
 
+  // Calculate debt progress (0-100%)
   const getDebtProgress = () => {
     const totalDebt = debts.reduce((sum, debt) => sum + debt.amount, 0);
     const totalPaid = debts.reduce((sum, debt) => sum + debt.paid, 0);
     return totalDebt > 0 ? Math.round((totalPaid / totalDebt) * 100) : 0;
   };
 
+  // Get plant stage based on debt progress
   const getPlantStage = () => {
     const progress = getDebtProgress();
     if (progress === 0) return 1;
@@ -314,10 +504,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     return 6;
   };
 
+  // Garden helper functions
+  const getCurrentPlant = (): GardenPlant | null => {
+    return gardenPlants.find(p => !p.completed) || null;
+  };
+
+  const getCompletedPlants = (): GardenPlant[] => {
+    return gardenPlants.filter(p => p.completed);
+  };
+
   const value: AppContextType = {
-    userId,
-    handleLogin,
-    handleLogout,
     user,
     setUser,
     debts,
@@ -339,12 +535,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, userId, hand
     updateStreak,
     getDebtProgress,
     getPlantStage,
-    payments,
+    // Garden
+    historicalDebtsPaid,
+    gardenPlants,
+    gardenBadges,
+    getCurrentPlant,
+    getCompletedPlants,
+    // Sesión
+    userId,
+    handleLogin,
+    handleLogout,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
+// Custom hook to use the context (EXPORTACIÓN CLAVE)
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

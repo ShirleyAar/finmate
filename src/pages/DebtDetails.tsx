@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
-import { Edit, ChevronLeft, Trash2, Plus, AlertTriangle, Crown, Calculator, TrendingUp } from "lucide-react";
+import { Edit, ChevronLeft, Trash2, Plus, AlertTriangle, Crown, Calculator, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useApp } from "@/contexts/AppContext";
 import { formatCurrency } from "@/lib/utils";
@@ -74,7 +74,30 @@ const DebtDetails = () => {
     return payment;
   };
 
+  // Helper to check if debt is fully paid
+  const isDebtPaid = (debt: typeof debts[0]) => debt.paid >= debt.amount;
+
+  // Sort debts: unpaid first (by due date), then paid debts
+  const sortedDebts = [...debts].sort((a, b) => {
+    const aIsPaid = isDebtPaid(a);
+    const bIsPaid = isDebtPaid(b);
+    
+    // Unpaid debts come first
+    if (aIsPaid !== bIsPaid) {
+      return aIsPaid ? 1 : -1;
+    }
+    
+    // Within unpaid: sort by due date (soonest first)
+    if (!aIsPaid && !bIsPaid) {
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }
+    
+    // Within paid: most recently paid first (we don't have completedAt, so keep original order)
+    return 0;
+  });
+
   const selectedDebt = selectedDebtId ? debts.find(d => d.id === selectedDebtId) : null;
+  const selectedDebtIsPaid = selectedDebt ? isDebtPaid(selectedDebt) : false;
   
   // Calcular datos de la deuda seleccionada
   const getDebtData = (debt: typeof debts[0]) => {
@@ -216,6 +239,14 @@ const DebtDetails = () => {
       });
       return;
     }
+    if (selectedDebtIsPaid) {
+      toast({
+        title: "Deuda Completada",
+        description: "Esta deuda ya está completamente pagada",
+        variant: "destructive",
+      });
+      return;
+    }
     setPaymentMethod("standard");
     setAcceleratedMonths("");
     setIsPaymentMethodDialogOpen(true);
@@ -258,6 +289,14 @@ const DebtDetails = () => {
       toast({
         title: "Selecciona una Deuda",
         description: "Por favor selecciona una deuda para simular mora",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedDebtIsPaid) {
+      toast({
+        title: "Deuda Completada",
+        description: "Esta deuda ya está completamente pagada, no aplica mora",
         variant: "destructive",
       });
       return;
@@ -342,29 +381,39 @@ const DebtDetails = () => {
               </Button>
             </div>
             
-            {debts.length === 0 ? (
+            {sortedDebts.length === 0 ? (
               <Card className="p-8 text-center">
                 <p className="text-muted-foreground">No tienes deudas registradas</p>
               </Card>
             ) : (
-              debts.map((debt) => {
+              sortedDebts.map((debt) => {
                 const debtData = getDebtData(debt);
                 const debtProgress = Math.round((debt.paid / debt.amount) * 100);
                 const isSelected = selectedDebtId === debt.id;
+                const isPaid = isDebtPaid(debt);
                 
                 return (
                   <Card 
                     key={debt.id} 
                     className={`p-6 cursor-pointer transition-all ${
-                      isSelected ? "border-2 border-growth bg-growth/5" : "hover:border-growth/30"
+                      isPaid 
+                        ? "bg-growth/10 border-growth/30 opacity-80" 
+                        : isSelected 
+                          ? "border-2 border-growth bg-growth/5" 
+                          : "hover:border-growth/30"
                     }`}
                     onClick={() => setSelectedDebtId(debt.id)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="font-semibold text-foreground">{debt.name}</h3>
-                          {isSelected && (
+                          {isPaid && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-growth text-white font-medium">
+                              ✓ Deuda Pagada
+                            </span>
+                          )}
+                          {isSelected && !isPaid && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-growth text-white">
                               Seleccionada
                             </span>
@@ -377,12 +426,14 @@ const DebtDetails = () => {
                             <p className="font-medium text-foreground">${formatCurrency(debt.amount)}</p>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Pagado</span>
+                            <span className="text-muted-foreground">Total Pagado</span>
                             <p className="font-medium text-growth">${formatCurrency(debt.paid)}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Saldo Pendiente</span>
-                            <p className="font-medium text-destructive">${formatCurrency(debtData.principal)}</p>
+                            <p className={`font-medium ${isPaid ? "text-growth" : "text-destructive"}`}>
+                              {isPaid ? "Completado" : `$${formatCurrency(debtData.principal)}`}
+                            </p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Tasa</span>
@@ -395,22 +446,38 @@ const DebtDetails = () => {
                             <span className="text-muted-foreground">Fecha Límite</span>
                             <p className="font-medium text-foreground">{new Date(debt.dueDate).toLocaleDateString('es-ES')}</p>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground">Meses Restantes</span>
-                            <p className="font-medium text-foreground">{debtData.remainingMonths} meses</p>
-                          </div>
+                          {!isPaid && (
+                            <div>
+                              <span className="text-muted-foreground">Meses Restantes</span>
+                              <p className="font-medium text-foreground">{debtData.remainingMonths} meses</p>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="mt-4 p-4 bg-trust/10 rounded-lg border border-trust/20">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-muted-foreground">Pago mensual recomendado (hasta la fecha límite)</span>
-                            <TrendingUp className="h-4 w-4 text-trust" />
+                        {!isPaid && (
+                          <div className="mt-4 p-4 bg-trust/10 rounded-lg border border-trust/20">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm text-muted-foreground">Pago mensual recomendado (hasta la fecha límite)</span>
+                              <TrendingUp className="h-4 w-4 text-trust" />
+                            </div>
+                            <p className="text-2xl font-bold text-trust">${formatCurrency(debtData.monthlyPayment)}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Calculado para liquidar la deuda en {debtData.remainingMonths} meses, incluyendo intereses según la tasa anual indicada.
+                            </p>
                           </div>
-                          <p className="text-2xl font-bold text-trust">${formatCurrency(debtData.monthlyPayment)}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Calculado para liquidar la deuda en {debtData.remainingMonths} meses, incluyendo intereses según la tasa anual indicada.
-                          </p>
-                        </div>
+                        )}
+
+                        {isPaid && (
+                          <div className="mt-4 p-4 bg-growth/20 rounded-lg border border-growth/30">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-5 w-5 text-growth" />
+                              <span className="font-semibold text-growth">¡Pago Completado!</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Has pagado el 100% de esta deuda.
+                            </p>
+                          </div>
+                        )}
 
                         <div className="mt-3">
                           <div className="flex justify-between text-xs mb-1">
@@ -430,10 +497,12 @@ const DebtDetails = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          disabled={isPaid}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEditDebt(debt);
+                            if (!isPaid) handleEditDebt(debt);
                           }}
+                          title={isPaid ? "No se puede editar una deuda pagada" : "Editar deuda"}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -468,37 +537,53 @@ const DebtDetails = () => {
                 </div>
               )}
 
+              {selectedDebtIsPaid && selectedDebtId && (
+                <div className="p-4 bg-growth/10 rounded-lg mb-4 border border-growth/20">
+                  <div className="flex items-center gap-2 text-growth font-medium">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Deuda Completada
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta deuda ya fue pagada por completo. No se pueden realizar más acciones de pago.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <Button
                   onClick={handleOpenPaymentMethod}
-                  disabled={!selectedDebtId}
-                  className="w-full bg-growth hover:bg-growth/90 text-white justify-start h-auto p-4"
+                  disabled={!selectedDebtId || selectedDebtIsPaid}
+                  className="w-full bg-growth hover:bg-growth/90 text-white justify-start h-auto p-4 disabled:opacity-50"
                 >
                   <Calculator className="h-5 w-5 mr-3 flex-shrink-0" />
                   <div className="text-left">
                     <div className="font-semibold">Elegir Forma de Pago</div>
-                    <div className="text-xs opacity-90 font-normal">Configura tu plan de pagos</div>
+                    <div className="text-xs opacity-90 font-normal">
+                      {selectedDebtIsPaid ? "No disponible - Deuda pagada" : "Configura tu plan de pagos"}
+                    </div>
                   </div>
                 </Button>
 
                 <Button
                   onClick={handleOpenMoraSimulator}
-                  disabled={!selectedDebtId}
+                  disabled={!selectedDebtId || selectedDebtIsPaid}
                   variant="outline"
-                  className="w-full justify-start h-auto p-4 border-2"
+                  className="w-full justify-start h-auto p-4 border-2 disabled:opacity-50"
                 >
                   <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0 text-destructive" />
                   <div className="text-left">
                     <div className="font-semibold">Simulador por Mora</div>
-                    <div className="text-xs text-muted-foreground">Calcula cargos por retraso</div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedDebtIsPaid ? "No disponible - Deuda pagada" : "Calcula cargos por retraso"}
+                    </div>
                   </div>
                 </Button>
 
                 <Button
-                  onClick={() => setIsPremiumDialogOpen(true)}
-                  disabled={!selectedDebtId}
+                  onClick={() => !selectedDebtIsPaid && setIsPremiumDialogOpen(true)}
+                  disabled={!selectedDebtId || selectedDebtIsPaid}
                   variant="outline"
-                  className="w-full justify-start h-auto p-4 border-2 border-accent/30"
+                  className="w-full justify-start h-auto p-4 border-2 border-accent/30 disabled:opacity-50"
                 >
                   <Crown className="h-5 w-5 mr-3 flex-shrink-0 text-accent" />
                   <div className="text-left flex-1">
@@ -511,10 +596,10 @@ const DebtDetails = () => {
                 </Button>
 
                 <Button
-                  onClick={() => setIsPremiumDialogOpen(true)}
-                  disabled={!selectedDebtId}
+                  onClick={() => !selectedDebtIsPaid && setIsPremiumDialogOpen(true)}
+                  disabled={!selectedDebtId || selectedDebtIsPaid}
                   variant="outline"
-                  className="w-full justify-start h-auto p-4 border-2 border-accent/30"
+                  className="w-full justify-start h-auto p-4 border-2 border-accent/30 disabled:opacity-50"
                 >
                   <Crown className="h-5 w-5 mr-3 flex-shrink-0 text-accent" />
                   <div className="text-left flex-1">

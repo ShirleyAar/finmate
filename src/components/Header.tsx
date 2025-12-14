@@ -9,16 +9,10 @@ const Header = () => {
           <div className="p-2 rounded-lg bg-growth/10 group-hover:bg-growth/20 transition-colors">
             <Sprout className="h-6 w-6 text-growth" />
           </div>
-          <span className="text-xl font-semibold text-foreground">FinMate</span>
+          <span className="text-xl font-semibold text-foreground">Klimba</span>
         </Link>
         
         <nav className="flex items-center gap-6">
-          <Link 
-            to="/about" 
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Acerca de
-          </Link>
           <Link 
             to="/faq" 
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"

@@ -183,8 +183,8 @@ const Income = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Balance</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? "text-trust" : "text-earth"}`}>
-                  ${formatCurrency(Math.abs(balance))}
+                <p className={`text-2xl font-bold ${balance >= 0 ? "text-trust" : "text-destructive"}`}>
+                  {balance < 0 ? "-" : ""}${formatCurrency(Math.abs(balance))}
                 </p>
               </div>
             </div>

@@ -5,8 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import { ChevronLeft, Flower2, Award, Sparkles } from "lucide-react";
-// Eliminamos la dependencia de useApp para las plantas por ahora para evitar errores
-// import { useApp } from "@/contexts/AppContext"; 
+import { useApp } from "@/contexts/AppContext";
 
 const STAGE_NAMES = ["Semilla", "Brote", "Planta Joven", "Capullo", "Florecida"];
 const STAGE_DESCRIPTIONS = [
@@ -21,59 +20,62 @@ const PlantVisual = ({ stage, name, icon }: { stage: number; name: string; icon?
   const stages = [
     // Semilla
     <div key="0" className="relative w-24 h-24 flex items-center justify-center">
-      <div className="w-8 h-8 bg-amber-700 rounded-full shadow-lg animate-pulse" />
-      <div className="absolute bottom-0 w-16 h-4 bg-amber-900/30 rounded-full blur-sm" />
+      <div className="w-8 h-8 bg-earth rounded-full shadow-lg animate-pulse" />
+      <div className="absolute bottom-0 w-16 h-4 bg-earth/30 rounded-full blur-sm" />
     </div>,
     // Brote
     <div key="1" className="relative w-24 h-24 flex items-center justify-center">
-      <div className="w-2 h-8 bg-green-500 rounded-full" />
-      <div className="absolute top-4 w-4 h-4 bg-green-400 rounded-full -left-1" />
-      <div className="absolute bottom-0 w-16 h-4 bg-amber-900/30 rounded-full blur-sm" />
+      <div className="w-2 h-8 bg-growth rounded-full" />
+      <div className="absolute top-4 w-4 h-4 bg-growth-light rounded-full -left-1" />
+      <div className="absolute bottom-0 w-16 h-4 bg-earth/30 rounded-full blur-sm" />
     </div>,
     // Planta Joven
     <div key="2" className="relative w-24 h-24 flex items-center justify-center">
-      <div className="w-2 h-12 bg-green-600 rounded-full" />
-      <div className="absolute top-2 w-6 h-4 bg-green-500 rounded-full -left-2 rotate-45" />
-      <div className="absolute top-4 w-6 h-4 bg-green-500 rounded-full -right-2 -rotate-45" />
-      <div className="absolute bottom-0 w-16 h-4 bg-amber-900/30 rounded-full blur-sm" />
+      <div className="w-2 h-12 bg-growth rounded-full" />
+      <div className="absolute top-2 w-6 h-4 bg-growth rounded-full -left-2 rotate-45" />
+      <div className="absolute top-4 w-6 h-4 bg-growth rounded-full -right-2 -rotate-45" />
+      <div className="absolute bottom-0 w-16 h-4 bg-earth/30 rounded-full blur-sm" />
     </div>,
     // Capullo
     <div key="3" className="relative w-24 h-24 flex items-center justify-center">
-      <div className="w-2 h-14 bg-green-600 rounded-full" />
-      <div className="absolute top-0 w-8 h-8 bg-green-300 rounded-full flex items-center justify-center">
-        <div className="w-4 h-4 bg-pink-400 rounded-full" />
+      <div className="w-2 h-14 bg-growth rounded-full" />
+      <div className="absolute top-0 w-8 h-8 bg-growth-light rounded-full flex items-center justify-center">
+        <div className="w-4 h-4 bg-growth rounded-full" />
       </div>
-      <div className="absolute top-6 w-6 h-4 bg-green-500 rounded-full -left-2 rotate-45" />
-      <div className="absolute top-8 w-6 h-4 bg-green-500 rounded-full -right-2 -rotate-45" />
-      <div className="absolute bottom-0 w-16 h-4 bg-amber-900/30 rounded-full blur-sm" />
+      <div className="absolute top-6 w-6 h-4 bg-growth rounded-full -left-2 rotate-45" />
+      <div className="absolute top-8 w-6 h-4 bg-growth rounded-full -right-2 -rotate-45" />
+      <div className="absolute bottom-0 w-16 h-4 bg-earth/30 rounded-full blur-sm" />
     </div>,
     // Florecida
     <div key="4" className="relative w-24 h-24 flex items-center justify-center animate-bounce">
-      <div className="text-6xl">{icon || "🌸"}</div>
+      <div className="text-5xl">{icon || "🌸"}</div>
       <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-yellow-400 animate-pulse" />
     </div>,
   ];
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-green-50">
-        {stages[stage] || stages[0]}
+      <div className="p-4 rounded-full bg-gradient-to-br from-growth/20 to-growth-light/30">
+        {stages[stage]}
       </div>
       <span className="text-sm font-medium text-foreground">{name}</span>
-      <span className="text-xs text-muted-foreground">{STAGE_NAMES[stage] || STAGE_NAMES[0]}</span>
+      <span className="text-xs text-muted-foreground">{STAGE_NAMES[stage]}</span>
     </div>
   );
 };
 
 const Garden = () => {
   const navigate = useNavigate();
-  
-  // DATOS FICTICIOS (MOCK) PARA QUE NO FALLE SI EL CONTEXTO NO TIENE ESTOS CAMPOS
-  const historicalDebtsPaid = 3; // Ejemplo: 3 deudas pagadas
-  const currentPlant = { name: "Rosa", stage: 2 }; // Planta en etapa 2 (Planta Joven)
-  const completedPlants: any[] = []; // Ninguna completada aún
-  const gardenBadges: any[] = []; // Ninguna insignia aún
+  const { 
+    historicalDebtsPaid, 
+    gardenPlants, 
+    gardenBadges, 
+    getCurrentPlant, 
+    getCompletedPlants 
+  } = useApp();
 
+  const currentPlant = getCurrentPlant();
+  const completedPlants = getCompletedPlants();
   const currentProgress = historicalDebtsPaid % 5;
   const progressPercent = (currentProgress / 5) * 100;
 
@@ -104,7 +106,7 @@ const Garden = () => {
         </Button>
 
         <div className="flex items-center gap-3 mb-2">
-          <Flower2 className="h-8 w-8 text-green-600" />
+          <Flower2 className="h-8 w-8 text-growth" />
           <h1 className="text-3xl font-bold text-foreground">Mi Jardín Financiero</h1>
         </div>
         <p className="text-muted-foreground mb-8">
@@ -112,18 +114,18 @@ const Garden = () => {
         </p>
 
         {/* Stats Card */}
-        <Card className="p-6 mb-8 bg-gradient-to-br from-green-50 to-card border-green-100 animate-fade-in">
+        <Card className="p-6 mb-8 bg-gradient-to-br from-growth/10 to-card border-growth/20 animate-fade-in">
           <div className="grid md:grid-cols-3 gap-6 text-center">
             <div>
-              <p className="text-3xl font-bold text-green-600">{historicalDebtsPaid}</p>
+              <p className="text-3xl font-bold text-growth">{historicalDebtsPaid}</p>
               <p className="text-sm text-muted-foreground">Deudas pagadas (histórico)</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-amber-700">{completedPlants.length}</p>
+              <p className="text-3xl font-bold text-earth">{completedPlants.length}</p>
               <p className="text-sm text-muted-foreground">Plantas florecidas</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-blue-600">{gardenBadges.length}</p>
+              <p className="text-3xl font-bold text-trust">{gardenBadges.length}</p>
               <p className="text-sm text-muted-foreground">Insignias de jardín</p>
             </div>
           </div>
@@ -131,7 +133,7 @@ const Garden = () => {
 
         {/* Current Plant Progress */}
         {currentPlant && (
-          <Card className="p-8 mb-8 animate-scale-in border-green-200 shadow-sm">
+          <Card className="p-8 mb-8 animate-scale-in">
             <h2 className="text-xl font-bold text-foreground mb-6 text-center">
               Planta en Progreso: {currentPlant.name}
             </h2>
@@ -148,11 +150,11 @@ const Garden = () => {
                   <span className="text-muted-foreground">
                     Progreso del {currentPlant.name}
                   </span>
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-growth">
                     {currentProgress}/5 deudas
                   </span>
                 </div>
-                <Progress value={progressPercent} className="h-4 bg-green-100" /> {/* Asegúrate de que Progress acepte className o style */}
+                <Progress value={progressPercent} className="h-4" />
                 <p className="text-center text-sm text-muted-foreground">
                   {STAGE_DESCRIPTIONS[currentPlant.stage]}
                 </p>
@@ -169,7 +171,7 @@ const Garden = () => {
           </h2>
           
           {completedPlants.length === 0 ? (
-            <Card className="p-8 text-center bg-muted/20 border-dashed">
+            <Card className="p-8 text-center">
               <Flower2 className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground">
                 Aún no tienes plantas florecidas. ¡Completa 5 deudas para desbloquear tu primera planta!
@@ -180,7 +182,7 @@ const Garden = () => {
               {completedPlants.map((plant) => (
                 <Card 
                   key={plant.id} 
-                  className="p-4 text-center bg-gradient-to-br from-green-50 to-card border-green-100 animate-fade-in"
+                  className="p-4 text-center bg-gradient-to-br from-growth-light/50 to-card border-growth/30 animate-fade-in"
                 >
                   <PlantVisual 
                     stage={4} 
@@ -198,10 +200,49 @@ const Garden = () => {
           )}
         </div>
 
+        {/* Garden Badges */}
+        <div>
+          <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+            <Award className="h-5 w-5 text-growth" />
+            Insignias del Jardín
+          </h2>
+          
+          {gardenBadges.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Award className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Las insignias se otorgan al completar plantas. ¡Paga 5 deudas para ganar tu primera insignia!
+              </p>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {gardenBadges.map((badge) => (
+                <Card 
+                  key={badge.id} 
+                  className="p-6 bg-gradient-to-br from-growth-light to-card border-growth/30 animate-fade-in"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">{badge.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{badge.name}</h3>
+                      <p className="text-sm text-muted-foreground">{badge.description}</p>
+                      {badge.awardedAt && (
+                        <p className="text-xs text-growth mt-1">
+                          Ganada el {new Date(badge.awardedAt).toLocaleDateString('es-ES')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Info Card */}
-        <Card className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-none">
+        <Card className="mt-8 p-6 bg-gradient-to-r from-trust/10 to-growth/10">
           <div className="flex items-start gap-4">
-            <Flower2 className="h-8 w-8 text-green-600 flex-shrink-0" />
+            <Flower2 className="h-8 w-8 text-growth flex-shrink-0" />
             <div>
               <h3 className="font-semibold text-foreground">¿Cómo funciona el Jardín?</h3>
               <p className="text-sm text-muted-foreground mt-1">

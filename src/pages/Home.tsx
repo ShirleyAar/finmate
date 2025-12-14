@@ -1,85 +1,98 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Leaf, Star } from "lucide-react";
+import { Star } from "lucide-react";
+// Eliminamos useApp y useToast de aquí para evitar que el botón intente hacer login
+// import { useApp } from "@/contexts/AppContext";
+// import { useToast } from "@/hooks/use-toast";
 
 const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
-      {/* HEADER */}
-      <header className="bg-white border-b py-4 px-6 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="bg-green-100 p-2 rounded-lg">
-            <Leaf className="h-6 w-6 text-growth" />
-          </div>
-          <span className="font-bold text-2xl text-gray-800 tracking-tight">Klimba</span>
-        </div>
-        <div className="hidden md:flex gap-8 text-sm font-medium text-gray-500">
-          <a href="#" className="hover:text-growth transition-colors">Acerca de</a>
-          <a href="#" className="hover:text-growth transition-colors">Preguntas</a>
-          <a href="#" className="hover:text-growth transition-colors">Contacto</a>
-        </div>
-      </header>
-
-      {/* CONTENIDO PRINCIPAL (HERO) */}
-      <main className="flex-1 w-full flex flex-col items-center justify-center px-4 py-20 bg-gradient-to-b from-white to-gray-50">
-        
-        <div className="w-full max-w-4xl text-center space-y-8 animate-fade-in">
-          <Card className="bg-white p-12 md:p-16 rounded-3xl shadow-xl border-none ring-1 ring-gray-100">
-            <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight">
-              Klimba — Tu <br />
-              <span className="text-growth">Compañero Financiero</span>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
+      <Header />
+      
+      <main className="flex-1 container mx-auto px-4 py-12 md:py-20">
+        <div className="max-w-6xl mx-auto">
+          {/* Central Card */}
+          <Card className="p-8 md:p-12 text-center max-w-2xl mx-auto animate-slide-up shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Klimba — Tu Compañero Financiero
             </h1>
-            
-            <p className="text-gray-500 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-              Haz crecer tu jardín financiero con herramientas simples para gestionar 
-              deudas, seguir tu progreso y aprender estrategias inteligentes.
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              Haz crecer tu jardín financiero con herramientas simples para gestionar deudas, seguir tu progreso y aprender estrategias inteligentes.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-              <Button 
-                onClick={() => navigate("/register")}
-                className="bg-growth hover:bg-growth/90 text-white font-bold px-10 py-7 text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto"
-              >
-                Crear Cuenta
-              </Button>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Botón Crear Cuenta (Navegación directa) */}
+              <Link to="/register">
+                <Button 
+                  size="lg" 
+                  variant="default" 
+                  className="w-full sm:w-auto bg-growth hover:bg-growth/90 text-white"
+                >
+                  Crear Cuenta
+                </Button>
+              </Link>
               
+              {/* Botón Iniciar Sesión (Navegación directa) */}
               <Button 
-                onClick={() => navigate("/login")}
-                variant="outline"
-                className="border-2 border-growth text-growth hover:bg-green-50 font-bold px-10 py-7 text-lg rounded-xl w-full sm:w-auto transition-all duration-300"
+                size="lg" 
+                variant="outline" 
+                className="w-full sm:w-auto border-growth text-growth hover:bg-green-50"
+                onClick={() => navigate("/login")} // ¡FIX: NAVEGACIÓN DIRECTA!
               >
                 Iniciar Sesión
               </Button>
             </div>
           </Card>
-        </div>
 
-        {/* TESTIMONIOS */}
-        <div className="mt-24 w-full max-w-6xl px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            Lo Que Dicen Nuestros Usuarios
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { text: "El servicio es excelente. Me ayudó a organizar mis deudas de manera simple.", author: "María G." },
-              { text: "Me ayudó a organizar mis deudas. Muy fácil de usar y sin complicaciones.", author: "Carlos R." },
-              { text: "Muy fácil de usar. La planta que crece me motiva a seguir pagando mis deudas.", author: "Ana L." }
-            ].map((item, i) => (
-              <Card key={i} className="p-8 border-none shadow-md bg-white hover:shadow-lg transition-shadow duration-300">
-                <div className="flex gap-1 text-yellow-400 mb-4">
-                  {[1,2,3,4,5].map(star => <Star key={star} className="h-4 w-4 fill-current" />)}
+          {/* Testimonials Section */}
+          <div className="mt-20">
+            <h2 className="text-3xl font-bold text-center text-foreground mb-12">
+              Lo Que Dicen Nuestros Usuarios
+            </h2>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="p-6 bg-gradient-to-br from-card to-muted/30 hover:shadow-lg transition-shadow">
+                <div className="flex gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-growth text-growth" />
+                  ))}
                 </div>
-                <p className="text-gray-600 italic leading-relaxed mb-4">
-                  "{item.text}"
+                <p className="text-foreground mb-4 italic">
+                  "El servicio es excelente. Me ayudó a organizar mis deudas de manera simple."
                 </p>
-                <p className="text-sm font-bold text-gray-800 text-right">— {item.author}</p>
+                <p className="text-sm font-medium text-muted-foreground">— María G.</p>
               </Card>
-            ))}
+
+              <Card className="p-6 bg-gradient-to-br from-card to-muted/30 hover:shadow-lg transition-shadow">
+                <div className="flex gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-growth text-growth" />
+                  ))}
+                </div>
+                <p className="text-foreground mb-4 italic">
+                  "Me ayudó a organizar mis deudas. Muy fácil de usar y sin complicaciones."
+                </p>
+                <p className="text-sm font-medium text-muted-foreground">— Carlos R.</p>
+              </Card>
+
+              <Card className="p-6 bg-gradient-to-br from-card to-muted/30 hover:shadow-lg transition-shadow">
+                <div className="flex gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-growth text-growth" />
+                  ))}
+                </div>
+                <p className="text-foreground mb-4 italic">
+                  "Muy fácil de usar. La planta que crece me motiva a seguir pagando mis deudas."
+                </p>
+                <p className="text-sm font-medium text-muted-foreground">— Ana L.</p>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
