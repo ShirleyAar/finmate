@@ -42,7 +42,7 @@ const Support = () => {
     },
     {
       question: "¿Necesito conectar mi cuenta bancaria?",
-      answer: "No, FinMate NO requiere acceso a tu cuenta bancaria. Registras manualmente tus deudas, pagos e ingresos para mantener tu privacidad y seguridad.",
+      answer: "No, Klimba NO requiere acceso a tu cuenta bancaria. Registras manualmente tus deudas, pagos e ingresos para mantener tu privacidad y seguridad.",
     },
     {
       question: "¿Qué son los retos semanales?",

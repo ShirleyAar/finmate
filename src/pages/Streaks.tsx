@@ -75,7 +75,7 @@ const Streaks = () => {
         <Card className="p-6 bg-gradient-to-r from-accent/10 to-growth/10">
           <h3 className="font-semibold text-foreground mb-3">¿Cómo Funcionan las Rachas?</h3>
           <div className="space-y-2 text-sm text-muted-foreground">
-            <p>• Las rachas miden tu constancia en usar FinMate.</p>
+            <p>• Las rachas miden tu constancia en usar Klimba.</p>
             <p>• Cada día que registras una actividad (pago, transacción, lección), tu racha aumenta.</p>
             <p>• Si pasas más de un día sin actividad, tu racha se reinicia.</p>
             <p>• Mantén rachas largas para ganar insignias especiales.</p>

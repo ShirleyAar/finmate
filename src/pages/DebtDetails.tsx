@@ -927,7 +927,7 @@ const DebtDetails = () => {
             </DialogHeader>
             <div className="text-center py-6">
               <p className="text-muted-foreground">
-                Esta función está disponible en FinMate Premium.
+                Esta función está disponible en Klimba Premium.
               </p>
             </div>
             <Button 
