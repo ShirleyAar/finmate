@@ -105,22 +105,12 @@ const Payments = () => {
     setSelectedExpense("");
   };
 
-  // Filter out $0.00 payments and only show payments for debts with pending balance
-  const debtIdsWithPendingBalance = debts
-    .filter(d => d.amount - d.paid > 0)
-    .map(d => d.id);
-
-  // Only show payments that: are not paid, have effective amount > 0, AND belong to debts with pending balance
   const upcomingPayments = scheduledPayments
-    .filter(p => {
-      const effectiveAmount = p.amount - p.paidAmount;
-      return !p.paid && effectiveAmount > 0.01 && debtIdsWithPendingBalance.includes(p.debtId);
-    })
+    .filter(p => !p.paid)
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   
-  // Show completed payments with actual amounts paid (exclude $0.00 payments)
   const completedPayments = scheduledPayments
-    .filter(p => p.paid && p.paidAmount > 0)
+    .filter(p => p.paid)
     .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
 
   return (
