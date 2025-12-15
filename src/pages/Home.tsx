@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Star } from "lucide-react";
-// Eliminamos useApp y useToast de aquí para evitar que el botón intente hacer login
+// Eliminamos useApp y useToast de aquí
 // import { useApp } from "@/contexts/AppContext";
 // import { useToast } from "@/hooks/use-toast";
 

@@ -62,14 +62,14 @@ const Premium = () => {
           <div className="flex justify-center gap-6 mb-10">
             <Card className="p-6 border-growth shadow-lg transition-all transform hover:scale-[1.02] cursor-default">
                 <h3 className="text-2xl font-bold text-growth mb-2">Mensual</h3>
-                <p className="text-4xl font-extrabold text-foreground mb-1">$9.99<span className="text-lg font-normal text-muted-foreground">/mes</span></p>
+                <p className="text-4xl font-extrabold text-foreground mb-1">$3.99<span className="text-lg font-normal text-muted-foreground">/mes</span></p>
                 <p className="text-sm text-muted-foreground">Facturado cada mes</p>
             </Card>
             <Card className="p-6 bg-green-50 border-green-400 shadow-xl transition-all transform hover:scale-[1.02] cursor-default relative">
                 <span className="absolute top-0 right-0 bg-growth text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">Ahorras 20%</span>
                 <h3 className="text-2xl font-bold text-green-700 mb-2">Anual</h3>
-                <p className="text-4xl font-extrabold text-foreground mb-1">$99.99<span className="text-lg font-normal text-muted-foreground">/año</span></p>
-                <p className="text-sm text-muted-foreground">Ahorra $19.89</p>
+                <p className="text-4xl font-extrabold text-foreground mb-1">$38.30<span className="text-lg font-normal text-muted-foreground">/año</span></p>
+                <p className="text-sm text-muted-foreground">Ahorra $9.57</p>
             </Card>
           </div>
 
